@@ -7,6 +7,25 @@ class Resources {
             url: `https://spclient.wg.spotify.com/metadata/4/track/${trackId}`
         });
     }
+
+    static getTrackAnalysisWG(uri) {
+
+        let trackId = this.getUriId(uri, "track");
+
+        return this.fetchAuthed({
+            url: `https://api.spotify.com/v1/audio-analysis/${trackId}`
+        });
+    }
+
+    static getTrackFeaturesWG(uri) {
+
+        let trackId = this.getUriId(uri, "track");
+
+        return this.fetchAuthed({
+            url: `https://api.spotify.com/v1/audio-features/${trackId}`
+        });
+    }
+
     static getColorAndLyricsWG(trackUri: string, coverUri: string): Promise<ColorAndLyricsWG> {
         return this.fetchAuthed({
             url: `https://spclient.wg.spotify.com/color-lyrics/v2/track/${this.getUriId(trackUri)}/image/${encodeURIComponent(coverUri)}`,
