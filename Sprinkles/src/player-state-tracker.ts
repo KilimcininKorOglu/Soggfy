@@ -153,6 +153,7 @@ export default class PlayerStateTracker {
             meta.disc = `${meta.disc}/${meta.totaldiscs}`;
             delete meta.totaltracks;
             delete meta.totaldiscs;
+            meta.TBPM = meta.BPM; delete meta.BPM;
         }
         let albumArtist = track.metadata.album_artist_name;
         if (albumArtist) {
@@ -199,8 +200,7 @@ export default class PlayerStateTracker {
             url: Resources.getOpenTrackURL(track.url),
             explicit: meta.is_explicit ? "1" : undefined,
             comment: JSON.stringify({ playerMeta: meta, meta: extraMeta, analysisMeta: analysisMeta, featuresMeta: featuresMeta }),
-            tempo: featuresMeta.tempo ? featuresMeta.tempo : undefined, // One of these is correct for all formats. FFmpeg doesn't document which.
-            bpm: featuresMeta.tempo ? featuresMeta.tempo : undefined
+            BPM: featuresMeta.tempo ? featuresMeta.tempo : undefined // This needs to be set to :s:0 or it breaks in OGG output
         };
     }
     private async getPodcastMetaProps(track: TrackInfo) {
