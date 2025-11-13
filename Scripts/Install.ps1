@@ -2,6 +2,8 @@ $base = $PSScriptRoot
 $temp = "$base\temp";
 $SpotifyDir = "$env:APPDATA\Spotify"
 
+#Fix: Tls error
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $SpotifyInstallerUrl = "https://upgrade.scdn.co/upgrade/client/win32-x86/spotify_installer-1.2.31.1205.g4d59ad7c-1561.exe"
 $SpotifyVersion = $SpotifyInstallerUrl -replace '.+installer-(.+)\.g.+', '$1'
 $SpotifyVersionWithCommit = $SpotifyInstallerUrl -replace '.+installer-(.+\.g.+)\.exe', '$1'
