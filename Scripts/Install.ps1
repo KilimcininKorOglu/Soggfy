@@ -30,7 +30,18 @@ function CheckOrInstallSpotify {
 
         Get-AppxPackage -Name SpotifyAB.SpotifyMusic | Remove-AppxPackage
     }
-    DownloadFile -Url $SpotifyInstallerUrl -DestPath "$temp\SpotifyInstaller-$SpotifyVersion.exe"
+	# Check if installer is already downloaded
+
+	if (Test-Path "$temp\SpotifyInstaller-$SpotifyVersion.exe") {
+		# Ask user if they want to reuse the existing download
+		if ((Read-Host -Prompt "Use existing downloaded Spotify installer? Y/N") -ne "y") {
+			DownloadFile -Url $SpotifyInstallerUrl -DestPath "$temp\SpotifyInstaller-$SpotifyVersion.exe"
+		}
+	}
+
+	else {
+		DownloadFile -Url $SpotifyInstallerUrl -DestPath "$temp\SpotifyInstaller-$SpotifyVersion.exe"
+	}
 
     Write-Host "Installing..."
 
