@@ -522,7 +522,11 @@ struct StateManagerImpl : public StateManager
             proc.AddArgs(extraArgs);
         }
         for (auto& [k, v] : meta.items()) {
-            proc.AddArg("-metadata");
+            if ((outExt == ".ogg" || outExt == ".opus") && k == std::string("BPM")) { // BPM must be set on the stream for some reason.
+                proc.AddArg("-metadata:s:0");
+            } else {
+                proc.AddArg("-metadata");
+            }
             proc.AddArg(k + "=" + v.get<std::string>());
         }
         proc.AddArgPath(outPath);
