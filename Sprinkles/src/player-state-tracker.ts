@@ -162,7 +162,20 @@ export default class PlayerStateTracker {
     private async getTrackMetaProps(track: TrackInfo) {
         let meta = track.metadata;
         let extraMeta = await Resources.getTrackMetadataWG(track.uri);
-        let analysisMeta = await Resources.getTrackAnalysisWG(track.uri);
+        let analysisMeta;
+        let featuresMeta;
+
+        try {
+            analysisMeta = await _resources__WEBPACK_IMPORTED_MODULE_1__["default"].getTrackAnalysisWG(track.uri);
+        } catch (e) {
+            analysisMeta = {};
+        }
+
+        try {
+            featuresMeta = await _resources__WEBPACK_IMPORTED_MODULE_1__["default"].getTrackFeaturesWG(track.uri);
+        } catch (e) {
+            featuresMeta = {};
+        }
 
         let { year, month, day } = extraMeta.album.date;
         let date = [year, month, day];
@@ -185,7 +198,9 @@ export default class PlayerStateTracker {
             isrc: extraMeta.external_id?.find(v => v.type === "isrc")?.id,
             url: Resources.getOpenTrackURL(track.url),
             explicit: meta.is_explicit ? "1" : undefined,
-            comment: JSON.stringify({ playerMeta: meta, meta: extraMeta })
+            comment: JSON.stringify({ playerMeta: meta, meta: extraMeta, analysisMeta: analysisMeta, featuresMeta: featuresMeta }),
+            tempo: featuresMeta.tempo ? featuresMeta.tempo : undefined, // One of these is correct for all formats. FFmpeg doesn't document which.
+            bpm: featuresMeta.tempo ? featuresMeta.tempo : undefined
         };
     }
     private async getPodcastMetaProps(track: TrackInfo) {
@@ -204,7 +219,7 @@ export default class PlayerStateTracker {
             url: Resources.getOpenTrackURL(track.url),
             podcast: "1",
             explicit: meta.explicit ? "1" : undefined,
-            comment: JSON.stringify({ playerMeta: meta, meta: extraMeta })
+            comment: JSON.stringify({ playerMeta: meta })
         };
     }
     private async getLyrics(track: TrackInfo) {
