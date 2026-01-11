@@ -1,4 +1,5 @@
 type ComponentValueCallback<T> = (key: string, val?: T) => T;
+type SyncCallback = (value: any) => void;
 
 type SliderOptions = {
     min?: number;
@@ -9,6 +10,24 @@ type SliderOptions = {
 type SwitchButton = HTMLButtonElement & { index: number };
 
 type AlignDir = "up" | "down" | "left" | "right" | "none";
+
+// Registry for syncing external config changes to UI elements
+const syncRegistry: Map<string, SyncCallback> = new Map();
+
+export function registerSyncCallback(key: string, callback: SyncCallback) {
+    syncRegistry.set(key, callback);
+}
+
+export function unregisterSyncCallback(key: string) {
+    syncRegistry.delete(key);
+}
+
+export function syncConfigToUI(key: string, value: any) {
+    const callback = syncRegistry.get(key);
+    if (callback) {
+        callback(value);
+    }
+}
 
 export default class Components {
     static createSettingOverlay(...elements: Node[]) {
@@ -66,6 +85,11 @@ export default class Components {
         node.checked = callback(key);
         node.onchange = () => callback(key, node.checked);
 
+        // Register for external sync
+        registerSyncCallback(key, (value: boolean) => {
+            node.checked = value;
+        });
+
         return node;
     }
     static select<T>(key: string, options: Record<string, T> | string[], callback: ComponentValueCallback<T>) {
@@ -92,6 +116,17 @@ export default class Components {
         node.onchange = () => {
             callback(key, entries[node.selectedIndex][1] as any);
         };
+
+        // Register for external sync
+        registerSyncCallback(key, (value: any) => {
+            for (let i = 0; i < entries.length; i++) {
+                if (entries[i][1] === value) {
+                    node.selectedIndex = i;
+                    break;
+                }
+            }
+        });
+
         return node;
     }
     static textInput(key: string, callback: ComponentValueCallback<string>) {
@@ -99,6 +134,11 @@ export default class Components {
         node.className = "sgf-text-input";
         node.value = callback(key);
         node.onchange = () => callback(key, node.value);
+
+        // Register for external sync
+        registerSyncCallback(key, (value: string) => {
+            node.value = value;
+        });
 
         return node;
     }
@@ -127,6 +167,12 @@ export default class Components {
 
         label.onchange = () => callback(key, parseFloat(label.value));
         slider.onchange = () => callback(key, parseFloat(slider.value));
+
+        // Register for external sync
+        registerSyncCallback(key, (value: number) => {
+            slider.value = value.toString();
+            label.value = formatter(value);
+        });
 
         return node;
     }

@@ -1,7 +1,7 @@
 import config, { isTrackIgnored } from "../config";
 import { Connection, MessageType } from "../connection";
 import Utils from "../utils";
-import UIC from "./components";
+import UIC, { syncConfigToUI } from "./components";
 import { Icons, MergedStyles } from "./ui-assets";
 import { Platform, Player, SpotifyUtils } from "../spotify-apis";
 import Resources from "../resources";
@@ -309,10 +309,15 @@ export default class UI {
     }
 
     public syncConfig(updatedEntries: Record<string, any>) {
+        // Sync to registered watchers (legacy)
         for (let watcher of this.configWatchers) {
             if (Object.hasOwn(updatedEntries, watcher.key)) {
                 watcher.cb(updatedEntries[watcher.key]);
             }
+        }
+        // Sync to UI components via registry
+        for (let key in updatedEntries) {
+            syncConfigToUI(key, updatedEntries[key]);
         }
     }
 }
