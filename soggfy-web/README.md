@@ -68,17 +68,17 @@ Frontend (React)     Backend (Node.js)      Soggfy (C++)
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/health | Health check |
-| GET | /api/auth/url | Get Spotify OAuth URL |
-| GET | /api/devices | List Spotify devices |
-| POST | /api/device | Set active device |
-| POST | /api/download | Add URL to queue |
-| GET | /api/queue | Get queue status |
-| POST | /api/queue/clear | Clear completed |
-| DELETE | /api/queue/:id | Remove from queue |
-| POST | /api/queue/skip | Skip current track |
+| Method | Endpoint         | Description           |
+|--------|------------------|-----------------------|
+| GET    | /api/health      | Health check          |
+| GET    | /api/auth/url    | Get Spotify OAuth URL |
+| GET    | /api/devices     | List Spotify devices  |
+| POST   | /api/device      | Set active device     |
+| POST   | /api/download    | Add URL to queue      |
+| GET    | /api/queue       | Get queue status      |
+| POST   | /api/queue/clear | Clear completed       |
+| DELETE | /api/queue/:id   | Remove from queue     |
+| POST   | /api/queue/skip  | Skip current track    |
 
 ## Troubleshooting
 
