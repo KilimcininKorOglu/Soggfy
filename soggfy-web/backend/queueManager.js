@@ -273,6 +273,8 @@ class QueueManager {
       throw new Error('Soggfy not connected');
     }
 
+    console.log('Sending config update to Soggfy:', JSON.stringify(updates));
+    
     // Send SYNC_CONFIG message to Soggfy with updates
     this.soggfyClient.send(MessageType.SYNC_CONFIG, updates);
 
