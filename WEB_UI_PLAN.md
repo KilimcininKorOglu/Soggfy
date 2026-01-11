@@ -15,6 +15,23 @@ Soggfy'ye web tabanlı bir arayüz ekleyerek Spotify linklerinden otomatik downl
 
 ---
 
+## ⚠️ Önemli Teknik Notlar
+
+Bu plan Soggfy kaynak kodu analiz edilerek hazırlanmıştır. Aşağıdaki detaylara dikkat edilmelidir:
+
+| Konu | Detay |
+|------|-------|
+| **WebSocket URL** | `ws://127.0.0.1:28653/sgf_ctrl` - Path (`/sgf_ctrl`) zorunludur |
+| **Status Değerleri** | `IN_PROGRESS`, `CONVERTING`, `DONE`, `ERROR` (UPPERCASE) |
+| **Track Eşleştirme** | Soggfy `trackUri` (`spotify:track:XXX`) kullanır, `playbackId` değil |
+| **Progress** | Soggfy progress yüzdesi göndermez, sadece status değişiklikleri |
+| **Config Sync** | Bağlantı kurulduğunda Soggfy `SYNC_CONFIG` mesajı gönderir |
+| **Token Refresh** | Spotify access token'ları 1 saat sonra expire olur, refresh gerekir |
+| **URL Desteği** | Track, Album ve Playlist URL'leri desteklenir |
+| **Reconnect** | WebSocket bağlantısı kesilirse exponential backoff ile yeniden bağlanır |
+
+---
+
 ## 🏗️ Sistem Mimarisi
 
 ```
@@ -95,13 +112,23 @@ class SoggfyClient {
   constructor() {
     this.ws = null;
     this.callbacks = new Map();
+    this.isConnected = false;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 10;
   }
 
   connect() {
-    this.ws = new WebSocket('ws://localhost:28653');
+    // IMPORTANT: Must include /sgf_ctrl path
+    this.ws = new WebSocket('ws://127.0.0.1:28653/sgf_ctrl');
 
     this.ws.on('open', () => {
       console.log('Connected to Soggfy ControlServer');
+      this.isConnected = true;
+      this.reconnectAttempts = 0;
+      
+      // Emit connected event for state recovery
+      const callback = this.callbacks.get('connected');
+      if (callback) callback();
     });
 
     this.ws.on('message', (data) => {
@@ -115,8 +142,22 @@ class SoggfyClient {
     });
 
     this.ws.on('close', () => {
-      console.log('Disconnected from Soggfy, reconnecting...');
-      setTimeout(() => this.connect(), 5000);
+      this.isConnected = false;
+      console.log('Disconnected from Soggfy');
+      
+      // Emit disconnected event
+      const callback = this.callbacks.get('disconnected');
+      if (callback) callback();
+      
+      // Reconnect with exponential backoff
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+        this.reconnectAttempts++;
+        console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})...`);
+        setTimeout(() => this.connect(), delay);
+      } else {
+        console.error('Max reconnection attempts reached');
+      }
     });
   }
 
@@ -168,6 +209,8 @@ class SpotifyAPI {
     this.clientSecret = clientSecret;
     this.accessToken = null;
     this.userAccessToken = null; // OAuth token for playback control
+    this.refreshToken = null;    // For token refresh
+    this.tokenExpiresAt = null;  // Token expiration timestamp
   }
 
   // Client Credentials Flow (metadata için)
@@ -218,7 +261,49 @@ class SpotifyAPI {
     );
 
     this.userAccessToken = response.data.access_token;
+    this.refreshToken = response.data.refresh_token;
+    // Token expires in 1 hour, refresh 5 min before
+    this.tokenExpiresAt = Date.now() + (response.data.expires_in - 300) * 1000;
     return response.data;
+  }
+
+  // Token refresh (Spotify tokens expire after 1 hour)
+  async refreshAccessToken() {
+    if (!this.refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    const response = await axios.post(
+      'https://accounts.spotify.com/api/token',
+      new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: this.refreshToken
+      }),
+      {
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(
+            this.clientId + ':' + this.clientSecret
+          ).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    this.userAccessToken = response.data.access_token;
+    // Refresh token may or may not be returned
+    if (response.data.refresh_token) {
+      this.refreshToken = response.data.refresh_token;
+    }
+    this.tokenExpiresAt = Date.now() + (response.data.expires_in - 300) * 1000;
+    console.log('Access token refreshed');
+    return response.data;
+  }
+
+  // Check and refresh token if needed
+  async ensureValidToken() {
+    if (this.tokenExpiresAt && Date.now() >= this.tokenExpiresAt) {
+      await this.refreshAccessToken();
+    }
   }
 
   async getTrackInfo(trackId) {
@@ -242,6 +327,7 @@ class SpotifyAPI {
   }
 
   async getDevices() {
+    await this.ensureValidToken();
     const response = await axios.get(
       'https://api.spotify.com/v1/me/player/devices',
       {
@@ -252,6 +338,7 @@ class SpotifyAPI {
   }
 
   async playTrack(trackUri, deviceId = null) {
+    await this.ensureValidToken();
     const url = deviceId
       ? `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
       : 'https://api.spotify.com/v1/me/player/play';
@@ -268,12 +355,84 @@ class SpotifyAPI {
     );
   }
 
+  // Get all tracks from an album
+  async getAlbumTracks(albumId) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/albums/${albumId}`,
+      {
+        headers: { 'Authorization': `Bearer ${this.accessToken}` }
+      }
+    );
+
+    return response.data.tracks.items.map(track => ({
+      id: track.id,
+      name: track.name,
+      artist: track.artists[0].name,
+      album: response.data.name,
+      duration: track.duration_ms,
+      uri: track.uri
+    }));
+  }
+
+  // Get all tracks from a playlist
+  async getPlaylistTracks(playlistId) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const tracks = [];
+    let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
+
+    // Handle pagination (playlists can have 10,000+ tracks)
+    while (url) {
+      const response = await axios.get(url, {
+        headers: { 'Authorization': `Bearer ${this.accessToken}` }
+      });
+
+      for (const item of response.data.items) {
+        if (item.track && item.track.type === 'track') {
+          tracks.push({
+            id: item.track.id,
+            name: item.track.name,
+            artist: item.track.artists[0]?.name || 'Unknown',
+            album: item.track.album?.name || 'Unknown',
+            duration: item.track.duration_ms,
+            uri: item.track.uri
+          });
+        }
+      }
+      url = response.data.next;
+    }
+    return tracks;
+  }
+
+  // Parse any Spotify URL (track, album, or playlist)
+  parseSpotifyUrl(url) {
+    // Track: https://open.spotify.com/track/XXXXX or spotify:track:XXXXX
+    const trackMatch = url.match(/track[\/:]([a-zA-Z0-9]+)/);
+    if (trackMatch) {
+      return { type: 'track', id: trackMatch[1] };
+    }
+
+    // Album: https://open.spotify.com/album/XXXXX or spotify:album:XXXXX
+    const albumMatch = url.match(/album[\/:]([a-zA-Z0-9]+)/);
+    if (albumMatch) {
+      return { type: 'album', id: albumMatch[1] };
+    }
+
+    // Playlist: https://open.spotify.com/playlist/XXXXX or spotify:playlist:XXXXX
+    const playlistMatch = url.match(/playlist[\/:]([a-zA-Z0-9]+)/);
+    if (playlistMatch) {
+      return { type: 'playlist', id: playlistMatch[1] };
+    }
+
+    return null;
+  }
+
+  // Legacy method for backward compatibility
   parseTrackId(url) {
-    // Formats:
-    // https://open.spotify.com/track/XXXXX
-    // spotify:track:XXXXX
-    const match = url.match(/track[\/:]([a-zA-Z0-9]+)/);
-    return match ? match[1] : null;
+    const parsed = this.parseSpotifyUrl(url);
+    return parsed?.type === 'track' ? parsed.id : null;
   }
 }
 
@@ -285,6 +444,25 @@ module.exports = SpotifyAPI;
 **Dosya:** `backend/queueManager.js`
 
 ```javascript
+// Soggfy Message Types (from ControlServer.h)
+const MessageType = {
+  SYNC_CONFIG: 1,
+  TRACK_META: 2,
+  DOWNLOAD_STATUS: 3,
+  OPEN_FOLDER: 4,
+  OPEN_FILE_PICKER: 5,
+  WRITE_FILE: 6,
+  PLAYER_STATE: 7
+};
+
+// Soggfy Status Values (UPPERCASE)
+const DownloadStatus = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  CONVERTING: 'CONVERTING',
+  DONE: 'DONE',
+  ERROR: 'ERROR'
+};
+
 class QueueManager {
   constructor(soggfyClient, spotifyAPI) {
     this.queue = [];
@@ -293,11 +471,27 @@ class QueueManager {
     this.soggfyClient = soggfyClient;
     this.spotifyAPI = spotifyAPI;
     this.deviceId = null;
+    this.soggfyConfig = null;
+
+    // Listen for config sync from Soggfy (sent on connection)
+    soggfyClient.on(MessageType.SYNC_CONFIG, (data) => {
+      this.soggfyConfig = data;
+      console.log('Received Soggfy config:', data);
+    });
 
     // Listen for download status updates from Soggfy
-    // MessageType.DOWNLOAD_STATUS = 3
-    soggfyClient.on(3, (data) => {
+    soggfyClient.on(MessageType.DOWNLOAD_STATUS, (data) => {
       this.handleDownloadStatus(data);
+    });
+
+    // Handle reconnection - config will be re-sent by Soggfy
+    soggfyClient.on('connected', () => {
+      console.log('Soggfy reconnected, config will be synced automatically');
+    });
+
+    soggfyClient.on('disconnected', () => {
+      console.log('Soggfy disconnected, pausing queue processing');
+      // Don't clear soggfyConfig - it will be refreshed on reconnect
     });
   }
 
@@ -305,35 +499,63 @@ class QueueManager {
     this.deviceId = deviceId;
   }
 
-  async addTrack(spotifyUrl) {
-    const trackId = this.spotifyAPI.parseTrackId(spotifyUrl);
-    if (!trackId) {
+  // Add any Spotify URL (track, album, or playlist)
+  async addUrl(spotifyUrl) {
+    const parsed = this.spotifyAPI.parseSpotifyUrl(spotifyUrl);
+    if (!parsed) {
       throw new Error('Invalid Spotify URL');
     }
 
-    // Check if already in queue or downloading
-    if (this.currentTrack?.id === trackId ||
-        this.queue.some(t => t.id === trackId)) {
-      throw new Error('Track already in queue');
+    let tracks = [];
+
+    switch (parsed.type) {
+      case 'track':
+        const trackInfo = await this.spotifyAPI.getTrackInfo(parsed.id);
+        tracks = [trackInfo];
+        break;
+
+      case 'album':
+        tracks = await this.spotifyAPI.getAlbumTracks(parsed.id);
+        console.log(`Adding album with ${tracks.length} tracks`);
+        break;
+
+      case 'playlist':
+        tracks = await this.spotifyAPI.getPlaylistTracks(parsed.id);
+        console.log(`Adding playlist with ${tracks.length} tracks`);
+        break;
     }
 
-    // Fetch metadata
-    const trackInfo = await this.spotifyAPI.getTrackInfo(trackId);
+    const addedTracks = [];
+    for (const trackInfo of tracks) {
+      // Skip if already in queue or downloading
+      if (this.currentTrack?.id === trackInfo.id ||
+          this.queue.some(t => t.id === trackInfo.id)) {
+        console.log(`Skipping duplicate: ${trackInfo.name}`);
+        continue;
+      }
 
-    const track = {
-      ...trackInfo,
-      status: 'queued',
-      addedAt: Date.now(),
-      progress: 0
-    };
+      const track = {
+        ...trackInfo,
+        status: 'queued',
+        addedAt: Date.now()
+      };
 
-    this.queue.push(track);
-    console.log(`Added to queue: ${track.name} - ${track.artist}`);
+      this.queue.push(track);
+      addedTracks.push(track);
+    }
+
+    console.log(`Added ${addedTracks.length} tracks to queue`);
 
     // Start processing if nothing is downloading
     this.processQueue();
 
-    return track;
+    return addedTracks;
+  }
+
+  // Legacy method for backward compatibility
+  async addTrack(spotifyUrl) {
+    const result = await this.addUrl(spotifyUrl);
+    return result[0];
   }
 
   async processQueue() {
@@ -369,27 +591,60 @@ class QueueManager {
   handleDownloadStatus(data) {
     console.log('Download status update:', data);
 
-    if (!this.currentTrack) return;
+    // Soggfy sends status with trackUri (spotify:track:XXX) in results object
+    // Format: { results: { "spotify:track:XXX": { status, message, path } } }
+    // Or for playbackId: { playbackId: "xxx", status, message }
+    
+    let trackUri = null;
+    let statusInfo = null;
 
-    // Update progress
-    if (data.progress !== undefined) {
-      this.currentTrack.progress = data.progress;
+    if (data.results) {
+      // Status update with trackUri
+      const entries = Object.entries(data.results);
+      if (entries.length > 0) {
+        [trackUri, statusInfo] = entries[0];
+      }
+    } else if (data.playbackId) {
+      // Status update with playbackId (less common)
+      statusInfo = data;
     }
 
-    // Check for completion
-    if (data.status === 'completed' || data.status === 'done') {
+    if (!statusInfo) return;
+
+    // Match by trackUri (spotify:track:XXX format)
+    if (this.currentTrack && trackUri) {
+      if (this.currentTrack.uri !== trackUri) {
+        console.log(`Status for different track: ${trackUri}`);
+        return;
+      }
+    }
+
+    if (!this.currentTrack) return;
+
+    const status = statusInfo.status;
+
+    // Update status display
+    if (status === DownloadStatus.CONVERTING) {
+      this.currentTrack.status = 'converting';
+    } else if (status === DownloadStatus.IN_PROGRESS) {
+      this.currentTrack.status = 'downloading';
+    }
+
+    // Check for completion (Soggfy uses UPPERCASE status values)
+    if (status === DownloadStatus.DONE) {
       console.log(`Download completed: ${this.currentTrack.name}`);
       this.currentTrack.status = 'completed';
       this.currentTrack.completedAt = Date.now();
+      this.currentTrack.path = statusInfo.path;
       this.completedTracks.push(this.currentTrack);
       this.currentTrack = null;
 
       // Process next track in queue
       setTimeout(() => this.processQueue(), 1000);
-    } else if (data.status === 'error' || data.status === 'failed') {
+    } else if (status === DownloadStatus.ERROR) {
       console.error(`Download failed: ${this.currentTrack.name}`);
       this.currentTrack.status = 'error';
-      this.currentTrack.error = data.message || 'Download failed';
+      this.currentTrack.error = statusInfo.message || 'Download failed';
       this.completedTracks.push(this.currentTrack);
       this.currentTrack = null;
 
@@ -771,15 +1026,7 @@ function App() {
                 <div className="track-name">{queue.current.name}</div>
                 <div className="track-artist">{queue.current.artist}</div>
               </div>
-              <div className="track-progress">
-                {queue.current.progress > 0 && (
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${queue.current.progress}%` }}
-                    />
-                  </div>
-                )}
+              <div className="track-status">
                 <span className="status-badge">{queue.current.status}</span>
               </div>
             </div>
@@ -1023,26 +1270,11 @@ header h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.track-progress {
+.track-status {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-  min-width: 120px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 6px;
-  background: #e0e0e0;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #667eea;
-  transition: width 0.3s;
+  align-items: center;
+  min-width: 100px;
+  justify-content: flex-end;
 }
 
 .status-badge {
@@ -1264,33 +1496,11 @@ npm start
 
 ## 🔧 Soggfy Değişiklikleri (Opsiyonel)
 
-Mevcut Soggfy implementasyonu çoğu durumda değişiklik gerektirmez. Ancak daha iyi entegrasyon için:
+Mevcut Soggfy implementasyonu çoğu durumda değişiklik gerektirmez.
 
-### 1. Progress Reporting İyileştirmesi
+> **Not:** Soggfy şu anda download progress yüzdesi göndermiyor. Sadece status değişikliklerini (IN_PROGRESS, CONVERTING, DONE, ERROR) broadcast ediyor. Progress bar eklemek için C++ tarafında değişiklik gerekir, ancak bu MVP için gerekli değil.
 
-**Dosya:** `SpotifyOggDumper/StateManager.cpp`
-
-Download progress'i WebSocket üzerinden gönder:
-
-```cpp
-void StateManagerImpl::ReceiveAudioData(const std::string& playbackId, const char* data, int length) {
-    // ... existing code ...
-
-    // Calculate progress
-    if (track.totalSize > 0) {
-        int progress = (track.downloadedBytes * 100) / track.totalSize;
-
-        // Send progress update
-        _controlServer->Broadcast(MessageType::DOWNLOAD_STATUS, {
-            {"playbackId", playbackId},
-            {"status", "downloading"},
-            {"progress", progress}
-        });
-    }
-}
-```
-
-### 2. Yeni Message Type (Opsiyonel)
+### 1. Yeni Message Type (Opsiyonel)
 
 **Dosya:** `SpotifyOggDumper/ControlServer.h`
 
@@ -1325,7 +1535,7 @@ void StateManagerImpl::HandleMessage(Connection* conn, Message&& msg) {
 **Çözüm:**
 - Spotify client çalıştığından emin ol
 - Soggfy DLL yüklenmiş olmalı (console'da log olmalı)
-- `ws://localhost:28653` erişilebilir mi test et
+- `ws://127.0.0.1:28653/sgf_ctrl` erişilebilir mi test et (path dahil!)
 
 ### Spotify API "Invalid Device" hatası
 
