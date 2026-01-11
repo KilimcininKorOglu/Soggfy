@@ -206,7 +206,8 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     soggfyConnected: soggfy.isConnected,
-    spotifyAuthenticated: !!spotify.userAccessToken
+    spotifyAuthenticated: !!spotify.userAccessToken,
+    autoSelectDevice: process.env.AUTO_SELECT_DEVICE !== 'false'
   });
 });
 

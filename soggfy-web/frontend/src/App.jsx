@@ -17,6 +17,7 @@ function App() {
   const [wsConnected, setWsConnected] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
+  const [autoSelectDevice, setAutoSelectDevice] = useState(true);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
 
@@ -94,8 +95,9 @@ function App() {
       const response = await axios.get(`${API_BASE}/health`);
       setSoggfyConnected(response.data.soggfyConnected);
       setAuthenticated(response.data.spotifyAuthenticated);
+      setAutoSelectDevice(response.data.autoSelectDevice !== false);
       if (response.data.spotifyAuthenticated) {
-        fetchDevices();
+        fetchDevices(response.data.autoSelectDevice !== false);
       }
       if (response.data.soggfyConnected) {
         fetchConfig();
@@ -114,11 +116,11 @@ function App() {
     }
   };
 
-  const fetchDevices = async () => {
+  const fetchDevices = async (autoSelect = autoSelectDevice) => {
     try {
       const response = await axios.get(`${API_BASE}/devices`);
       setDevices(response.data.devices || []);
-      if (response.data.devices?.length === 1) {
+      if (autoSelect && response.data.devices?.length === 1) {
         const deviceId = response.data.devices[0].id;
         setSelectedDevice(deviceId);
         await selectDevice(deviceId);
