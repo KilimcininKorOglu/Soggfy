@@ -142,20 +142,26 @@ function Settings({ config, onClose, onConfigUpdate }) {
               />
             </label>
 
-            <label className="setting-item">
-              <span className="setting-label">Playback Speed</span>
-              <select
+            <div className="setting-item slider-item">
+              <div className="setting-label-row">
+                <span className="setting-label">Playback Speed</span>
+                <span className="speed-value">{localConfig.playbackSpeed ?? 1}x</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="30"
+                step="1"
                 value={localConfig.playbackSpeed ?? 1}
-                onChange={(e) => handleChange('playbackSpeed', parseFloat(e.target.value))}
-              >
-                <option value={1}>1x (Normal)</option>
-                <option value={2}>2x</option>
-                <option value={5}>5x</option>
-                <option value={10}>10x</option>
-                <option value={20}>20x</option>
-                <option value={30}>30x (Max)</option>
-              </select>
-            </label>
+                onChange={(e) => handleChange('playbackSpeed', parseInt(e.target.value))}
+                className="speed-slider"
+              />
+              <div className="slider-labels">
+                <span>1x</span>
+                <span>15x</span>
+                <span>30x</span>
+              </div>
+            </div>
           </section>
 
           <section className="settings-section">
