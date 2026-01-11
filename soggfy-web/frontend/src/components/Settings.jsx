@@ -7,13 +7,31 @@ const API_BASE = 'http://localhost:3001/api';
 function Settings({ config, onClose, onConfigUpdate }) {
   const [localConfig, setLocalConfig] = useState(config || {});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!config);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (config) {
       setLocalConfig(config);
+      setLoading(false);
+    } else {
+      fetchConfig();
     }
   }, [config]);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/config`);
+      setLocalConfig(response.data);
+      if (onConfigUpdate) {
+        onConfigUpdate(response.data);
+      }
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load config: ' + (err.response?.data?.error || err.message));
+      setLoading(false);
+    }
+  };
 
   const handleToggle = (key) => {
     setLocalConfig(prev => ({ ...prev, [key]: !prev[key] }));
@@ -46,7 +64,7 @@ function Settings({ config, onClose, onConfigUpdate }) {
     }
   };
 
-  if (!config) {
+  if (loading) {
     return (
       <div className="settings-overlay">
         <div className="settings-modal">
@@ -55,6 +73,20 @@ function Settings({ config, onClose, onConfigUpdate }) {
             <button onClick={onClose} className="close-button">×</button>
           </div>
           <div className="settings-loading">Loading config...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !localConfig.downloaderEnabled === undefined) {
+    return (
+      <div className="settings-overlay">
+        <div className="settings-modal">
+          <div className="settings-header">
+            <h2>Settings</h2>
+            <button onClick={onClose} className="close-button">×</button>
+          </div>
+          <div className="settings-error">{error}</div>
         </div>
       </div>
     );

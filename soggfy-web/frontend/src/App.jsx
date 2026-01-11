@@ -97,8 +97,20 @@ function App() {
       if (response.data.spotifyAuthenticated) {
         fetchDevices();
       }
+      if (response.data.soggfyConnected) {
+        fetchConfig();
+      }
     } catch (error) {
       console.error('Health check failed:', error);
+    }
+  };
+
+  const fetchConfig = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/config`);
+      setSoggfyConfig(response.data);
+    } catch (error) {
+      console.error('Failed to fetch config:', error);
     }
   };
 
