@@ -185,6 +185,7 @@ export default class UI {
                 UIC.row("Playback speed",           UIC.slider("playbackSpeed", { min: 1, max: 50, step: 1, formatter: val => val + "x" }, onChange)),
                 UIC.row("Output format",            UIC.select("outputFormat", Object.getOwnPropertyNames(defaultFormats), onFormatChange)),
                 customFormatSection,
+                UIC.row("Download podcasts",        UIC.toggle("downloadPodcasts", onChange)),
                 UIC.row("Skip downloaded tracks",   UIC.toggle("skipDownloadedTracks", onChange)),
                 UIC.row("Skip ignored tracks",      UIC.toggle("skipIgnoredTracks", onChange)),
                 UIC.row("Embed cover art",          UIC.toggle("embedCoverArt", onChange)),

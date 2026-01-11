@@ -1,6 +1,7 @@
 let config = {
     playbackSpeed: 1.0,
     downloaderEnabled: true,
+    downloadPodcasts: true,
     skipDownloadedTracks: false,
     skipIgnoredTracks: false,
     embedLyrics: true,
@@ -27,6 +28,15 @@ let config = {
 export default config;
 
 export function isTrackIgnored(track) {
+    // Check if podcasts are disabled
+    if (!config.downloadPodcasts) {
+        const isEpisode = track.type === "episode" || 
+                          track.uri?.startsWith("spotify:episode:");
+        if (isEpisode) {
+            return true;
+        }
+    }
+
     let tieUris = [
         track.uri,
         track.album?.uri ?? track.albumUri,
