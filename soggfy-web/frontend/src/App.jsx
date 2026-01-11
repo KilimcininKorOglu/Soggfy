@@ -229,7 +229,7 @@ function App() {
     return (
       <div className="app">
         <div className="auth-container">
-          <h1>Soggfy Web Downloader</h1>
+          <h1>Soggfy Web UI</h1>
           <p>Authenticate with Spotify to control playback</p>
           <button onClick={handleAuth} className="auth-button">
             Connect Spotify Account
@@ -268,7 +268,7 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>Soggfy Web Downloader</h1>
+        <h1>Soggfy Web UI</h1>
         <div className="header-actions">
           <button onClick={() => setShowSettings(true)} className="settings-button">
             Settings
