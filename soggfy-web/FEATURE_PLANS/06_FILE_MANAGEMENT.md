@@ -535,21 +535,21 @@ module.exports = MetadataEditor;
 
 #### API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/files` | List directory contents |
-| GET | `/api/files/details` | Get file details with metadata |
-| GET | `/api/files/search` | Search files |
-| DELETE | `/api/files` | Delete file or directory |
-| POST | `/api/files/move` | Move/rename file |
-| POST | `/api/files/mkdir` | Create directory |
-| GET | `/api/files/stats` | Get storage statistics |
-| GET | `/api/files/duplicates` | Find duplicate files |
-| GET | `/api/files/metadata` | Get file metadata |
-| PUT | `/api/files/metadata` | Update file metadata |
-| GET | `/api/files/artwork` | Get file artwork |
-| DELETE | `/api/files/artwork` | Remove file artwork |
-| PUT | `/api/files/metadata/batch` | Batch update metadata |
+| Method | Endpoint                    | Description                    |
+|--------|-----------------------------|--------------------------------|
+| GET    | `/api/files`                | List directory contents        |
+| GET    | `/api/files/details`        | Get file details with metadata |
+| GET    | `/api/files/search`         | Search files                   |
+| DELETE | `/api/files`                | Delete file or directory       |
+| POST   | `/api/files/move`           | Move/rename file               |
+| POST   | `/api/files/mkdir`          | Create directory               |
+| GET    | `/api/files/stats`          | Get storage statistics         |
+| GET    | `/api/files/duplicates`     | Find duplicate files           |
+| GET    | `/api/files/metadata`       | Get file metadata              |
+| PUT    | `/api/files/metadata`       | Update file metadata           |
+| GET    | `/api/files/artwork`        | Get file artwork               |
+| DELETE | `/api/files/artwork`        | Remove file artwork            |
+| PUT    | `/api/files/metadata/batch` | Batch update metadata          |
 
 ### Frontend Changes
 

@@ -487,14 +487,14 @@ module.exports = TelegramBot;
 
 #### API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/notifications/settings` | Get notification settings |
-| PUT | `/api/notifications/settings` | Update notification settings |
-| POST | `/api/notifications/push/subscribe` | Register push subscription |
-| POST | `/api/notifications/push/unsubscribe` | Unregister push subscription |
-| GET | `/api/notifications/vapid-key` | Get VAPID public key |
-| POST | `/api/notifications/test` | Send test notification |
+| Method | Endpoint                              | Description                  |
+|--------|---------------------------------------|------------------------------|
+| GET    | `/api/notifications/settings`         | Get notification settings    |
+| PUT    | `/api/notifications/settings`         | Update notification settings |
+| POST   | `/api/notifications/push/subscribe`   | Register push subscription   |
+| POST   | `/api/notifications/push/unsubscribe` | Unregister push subscription |
+| GET    | `/api/notifications/vapid-key`        | Get VAPID public key         |
+| POST   | `/api/notifications/test`             | Send test notification       |
 
 ### Frontend Changes
 
