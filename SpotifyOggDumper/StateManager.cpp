@@ -504,8 +504,8 @@ struct StateManagerImpl : public StateManager
         proc.AddArgs("-y -loglevel warning -i");
         proc.AddArgPath(path);
 
+        auto outExt = outPath.extension();
         if (_config.value("embedCoverArt", true)) {
-            auto outExt = outPath.extension();
             if (outExt == ".ogg" || outExt == ".opus") {
                 //ffmpeg can't create OGGs with covers directly, we need to manually
                 //create a flac metadata block and attach it instead.

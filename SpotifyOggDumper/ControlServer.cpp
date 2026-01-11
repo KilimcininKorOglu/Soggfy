@@ -13,10 +13,10 @@ void ControlServer::Run()
     CreateIdleTimer();
 
     _app->ws<Connection>("/sgf_ctrl", {
+        .idleTimeout = 32,
         .compression = uWS::CompressOptions::DISABLED,
         .maxPayloadLength = 1024 * 1024 * 8,
         .maxBackpressure = 1024 * 1024 * 16,
-        .idleTimeout = 32,
         .closeOnBackpressureLimit = false,
         .resetIdleTimeoutOnSend = false,
         .sendPingsAutomatically = true,
