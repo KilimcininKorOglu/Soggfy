@@ -19,16 +19,16 @@ Soggfy'ye web tabanlı bir arayüz ekleyerek Spotify linklerinden otomatik downl
 
 Bu plan Soggfy kaynak kodu analiz edilerek hazırlanmıştır. Aşağıdaki detaylara dikkat edilmelidir:
 
-| Konu | Detay |
-|------|-------|
-| **WebSocket URL** | `ws://127.0.0.1:28653/sgf_ctrl` - Path (`/sgf_ctrl`) zorunludur |
-| **Status Değerleri** | `IN_PROGRESS`, `CONVERTING`, `DONE`, `ERROR` (UPPERCASE) |
-| **Track Eşleştirme** | Soggfy `trackUri` (`spotify:track:XXX`) kullanır, `playbackId` değil |
-| **Progress** | Soggfy progress yüzdesi göndermez, sadece status değişiklikleri |
-| **Config Sync** | Bağlantı kurulduğunda Soggfy `SYNC_CONFIG` mesajı gönderir |
-| **Token Refresh** | Spotify access token'ları 1 saat sonra expire olur, refresh gerekir |
-| **URL Desteği** | Track, Album ve Playlist URL'leri desteklenir |
-| **Reconnect** | WebSocket bağlantısı kesilirse exponential backoff ile yeniden bağlanır |
+| Konu                 | Detay                                                                   |
+|----------------------|-------------------------------------------------------------------------|
+| **WebSocket URL**    | `ws://127.0.0.1:28653/sgf_ctrl` - Path (`/sgf_ctrl`) zorunludur         |
+| **Status Değerleri** | `IN_PROGRESS`, `CONVERTING`, `DONE`, `ERROR` (UPPERCASE)                |
+| **Track Eşleştirme** | Soggfy `trackUri` (`spotify:track:XXX`) kullanır, `playbackId` değil    |
+| **Progress**         | Soggfy progress yüzdesi göndermez, sadece status değişiklikleri         |
+| **Config Sync**      | Bağlantı kurulduğunda Soggfy `SYNC_CONFIG` mesajı gönderir              |
+| **Token Refresh**    | Spotify access token'ları 1 saat sonra expire olur, refresh gerekir     |
+| **URL Desteği**      | Track, Album ve Playlist URL'leri desteklenir                           |
+| **Reconnect**        | WebSocket bağlantısı kesilirse exponential backoff ile yeniden bağlanır |
 
 ---
 

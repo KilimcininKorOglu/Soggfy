@@ -48,12 +48,12 @@ Bu dokuman Soggfy'nin sarki indirme surecini detayli olarak aciklar.
 
 #### Ana Dosyalar
 
-| Dosya | Gorev |
-|-------|-------|
-| `Main.cpp` | DLL giris noktasi, hook kurulumu |
-| `StateManager.cpp` | Track yonetimi, dosya yazma, FFmpeg |
-| `ControlServer.cpp` | WebSocket sunucusu (port 28653) |
-| `CefUtils.cpp` | JS injection, URL bloklama |
+| Dosya               | Gorev                               |
+|---------------------|-------------------------------------|
+| `Main.cpp`          | DLL giris noktasi, hook kurulumu    |
+| `StateManager.cpp`  | Track yonetimi, dosya yazma, FFmpeg |
+| `ControlServer.cpp` | WebSocket sunucusu (port 28653)     |
+| `CefUtils.cpp`      | JS injection, URL bloklama          |
 
 ### 2. Sprinkles (UI Layer)
 
@@ -62,13 +62,13 @@ Bu dokuman Soggfy'nin sarki indirme surecini detayli olarak aciklar.
 
 #### Ana Dosyalar
 
-| Dosya | Gorev |
-|-------|-------|
-| `main.ts` | Giris noktasi, mesaj yonlendirme |
+| Dosya                     | Gorev                             |
+|---------------------------|-----------------------------------|
+| `main.ts`                 | Giris noktasi, mesaj yonlendirme  |
 | `player-state-tracker.ts` | Playback izleme, metadata toplama |
-| `connection.ts` | WebSocket client |
-| `resources.ts` | Spotify API cagrilari |
-| `config.ts` | Kullanici ayarlari |
+| `connection.ts`           | WebSocket client                  |
+| `resources.ts`            | Spotify API cagrilari             |
+| `config.ts`               | Kullanici ayarlari                |
 
 ---
 
@@ -273,15 +273,15 @@ Bu dokuman Soggfy'nin sarki indirme surecini detayli olarak aciklar.
 
 ### Mesaj Tipleri
 
-| Type | Isim | Yon | Aciklama |
-|------|------|-----|----------|
-| 1 | SYNC_CONFIG | S<->C | Config senkronizasyonu |
-| 2 | TRACK_META | S<->C | Metadata istegi/cevabi |
-| 3 | DOWNLOAD_STATUS | S<->C | Indirme durumu |
-| 4 | OPEN_FOLDER | C->S | Dosya gezgininde ac |
-| 5 | OPEN_FILE_PICKER | C<->S | Dosya secici dialog |
-| 6 | WRITE_FILE | C->S | Dosya yaz (lyrics, canvas) |
-| 7 | PLAYER_STATE | C->S | Playback event (start/end) |
+| Type | Isim             | Yon   | Aciklama                   |
+|------|------------------|-------|----------------------------|
+| 1    | SYNC_CONFIG      | S<->C | Config senkronizasyonu     |
+| 2    | TRACK_META       | S<->C | Metadata istegi/cevabi     |
+| 3    | DOWNLOAD_STATUS  | S<->C | Indirme durumu             |
+| 4    | OPEN_FOLDER      | C->S  | Dosya gezgininde ac        |
+| 5    | OPEN_FILE_PICKER | C<->S | Dosya secici dialog        |
+| 6    | WRITE_FILE       | C->S  | Dosya yaz (lyrics, canvas) |
+| 7    | PLAYER_STATE     | C->S  | Playback event (start/end) |
 
 **S = Server (C++ DLL), C = Client (JS Sprinkles)**
 
@@ -289,12 +289,12 @@ Bu dokuman Soggfy'nin sarki indirme surecini detayli olarak aciklar.
 
 ## Status Degerleri
 
-| Status | Aciklama |
-|--------|----------|
-| `IN_PROGRESS` | Audio verisi aliniyor |
-| `CONVERTING` | FFmpeg ile donusturuluyor |
-| `DONE` | Basariyla tamamlandi |
-| `ERROR` | Hata olustu |
+| Status        | Aciklama                  |
+|---------------|---------------------------|
+| `IN_PROGRESS` | Audio verisi aliniyor     |
+| `CONVERTING`  | FFmpeg ile donusturuluyor |
+| `DONE`        | Basariyla tamamlandi      |
+| `ERROR`       | Hata olustu               |
 
 ---
 
@@ -409,28 +409,28 @@ C:/Users/xxx/Music/Soggfy/
 
 ### Path Template Degiskenleri
 
-| Degisken | Aciklama |
-|----------|----------|
-| `{track_name}` | Sarki adi |
-| `{artist_name}` | Sanatci adi |
-| `{album_name}` | Album adi |
-| `{track_num}` | Track numarasi (01, 02, ...) |
-| `{disc_num}` | Disk numarasi |
-| `{release_date}` | Yayin tarihi |
-| `{playlist_name}` | Playlist adi |
-| `{multi_disc_path}` | "/CD 1" (coklu disk ise) |
+| Degisken            | Aciklama                     |
+|---------------------|------------------------------|
+| `{track_name}`      | Sarki adi                    |
+| `{artist_name}`     | Sanatci adi                  |
+| `{album_name}`      | Album adi                    |
+| `{track_num}`       | Track numarasi (01, 02, ...) |
+| `{disc_num}`        | Disk numarasi                |
+| `{release_date}`    | Yayin tarihi                 |
+| `{playlist_name}`   | Playlist adi                 |
+| `{multi_disc_path}` | "/CD 1" (coklu disk ise)     |
 
 ---
 
 ## Hata Durumlari
 
-| Hata | Sebep | Cozum |
-|------|-------|-------|
-| "Track didn't play from start" | Sarki ortasindan baslatildi | Basa sar ve tekrar oynat |
-| "Track was seeked" | Sarki icinde seek yapildi | Seek yapmadan dinle |
-| "Track was skipped" | Sarki atlanildi | Sarki bitene kadar bekle |
-| "Unrecognized audio codec" | OGG degilse (AAC/MP3) | Streaming quality'yi degistir |
-| "FFmpeg exited with code X" | Donusturme hatasi | Log dosyasina bak |
+| Hata                           | Sebep                       | Cozum                         |
+|--------------------------------|-----------------------------|-------------------------------|
+| "Track didn't play from start" | Sarki ortasindan baslatildi | Basa sar ve tekrar oynat      |
+| "Track was seeked"             | Sarki icinde seek yapildi   | Seek yapmadan dinle           |
+| "Track was skipped"            | Sarki atlanildi             | Sarki bitene kadar bekle      |
+| "Unrecognized audio codec"     | OGG degilse (AAC/MP3)       | Streaming quality'yi degistir |
+| "FFmpeg exited with code X"    | Donusturme hatasi           | Log dosyasina bak             |
 
 ---
 

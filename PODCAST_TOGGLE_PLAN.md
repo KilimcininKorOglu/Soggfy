@@ -290,10 +290,10 @@ export function isTrackIgnored(track) {
 
 ## Dosya Ozeti
 
-| Dosya | Degisiklik |
-|-------|-----------|
+| Dosya                     | Degisiklik                                             |
+|---------------------------|--------------------------------------------------------|
 | `Sprinkles/src/config.ts` | `downloadPodcasts` ayari + `isTrackIgnored` guncelleme |
-| `Sprinkles/src/ui/ui.ts` | Settings dialog'a toggle ekleme |
+| `Sprinkles/src/ui/ui.ts`  | Settings dialog'a toggle ekleme                        |
 
 **Tahmini Sure:** 15-30 dakika
 
