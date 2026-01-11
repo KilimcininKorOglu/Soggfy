@@ -6,3 +6,8 @@ build/
 obj/
 vcpkg_installed/
 external/
+
+# Node.js
+node_modules/
+soggfy-web/backend/.env
+soggfy-web/frontend/build/
