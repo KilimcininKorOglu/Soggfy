@@ -125,6 +125,18 @@ void ControlServer::Broadcast(const Message& msg)
     });
 }
 
+void ControlServer::BroadcastExcept(Connection* except, const Message& msg)
+{
+    WebSocket* exceptWs = except ? except->Socket : nullptr;
+    _loop->defer([this, exceptWs, data = std::move(msg.Serialize())]() {
+        for (auto ws : _clients) {
+            if (ws != exceptWs) {
+                SendData(ws, data);
+            }
+        }
+    });
+}
+
 void Connection::Send(const Message& msg)
 {
     SendData(Socket, msg.Serialize());

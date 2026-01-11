@@ -110,6 +110,8 @@ struct StateManagerImpl : public StateManager
                     _config[key] = val;
                 }
                 std::ofstream(_dataDir / "config.json") << _config.dump(4);
+                // Broadcast config update to other clients (e.g., Sprinkles when Web UI changes config)
+                _ctrlSv.BroadcastExcept(conn, MessageType::SYNC_CONFIG, content);
 
                 if (!_config.value("downloaderEnabled", true)) {
                     std::lock_guard lock(_mutex);

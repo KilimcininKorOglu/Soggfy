@@ -88,6 +88,10 @@ public:
     void Broadcast(const Message& msg);
     void Broadcast(MessageType type, const json& content) { Broadcast({ type, content }); }
 
+    //Sends the specified message to all connected clients except the specified one.
+    void BroadcastExcept(Connection* except, const Message& msg);
+    void BroadcastExcept(Connection* except, MessageType type, const json& content) { BroadcastExcept(except, { type, content }); }
+
     int GetListenPort() const { return _port; }
 
 private:
