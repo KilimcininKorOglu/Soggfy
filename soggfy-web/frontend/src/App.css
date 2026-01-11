@@ -786,3 +786,24 @@ h3 {
   background: var(--accent-primary);
   color: var(--bg-deep);
 }
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 24px 0;
+  margin-top: 32px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.app-footer a {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color var(--transition-fast);
+}
+
+.app-footer a:hover {
+  color: var(--accent-primary);
+}

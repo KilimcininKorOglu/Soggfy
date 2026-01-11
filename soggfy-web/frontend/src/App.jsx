@@ -386,6 +386,12 @@ function App() {
           </div>
         )}
       </div>
+
+      <footer className="app-footer">
+        <a href="https://x.com/KorOglan" target="_blank" rel="noopener noreferrer">
+          Kilimcinin Kor Oglu
+        </a>
+      </footer>
     </div>
   );
 }
