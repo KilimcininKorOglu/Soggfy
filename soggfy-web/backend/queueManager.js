@@ -263,6 +263,26 @@ class QueueManager {
     }
     return false;
   }
+
+  getConfig() {
+    return this.soggfyConfig;
+  }
+
+  updateConfig(updates) {
+    if (!this.soggfyClient.isConnected) {
+      throw new Error('Soggfy not connected');
+    }
+
+    // Send SYNC_CONFIG message to Soggfy with updates
+    this.soggfyClient.send(MessageType.SYNC_CONFIG, updates);
+
+    // Optimistically update local config
+    if (this.soggfyConfig) {
+      this.soggfyConfig = { ...this.soggfyConfig, ...updates };
+    }
+
+    return this.soggfyConfig;
+  }
 }
 
 module.exports = QueueManager;

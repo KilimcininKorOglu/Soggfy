@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
+import Settings from './components/Settings';
 
 const API_BASE = 'http://localhost:3001/api';
 const WS_URL = 'ws://localhost:3001/ws';
@@ -14,6 +15,8 @@ function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [soggfyConnected, setSoggfyConnected] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [soggfyConfig, setSoggfyConfig] = useState(null);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
 
@@ -48,6 +51,10 @@ function App() {
             if (message.data.authenticated) {
               fetchDevices();
             }
+            break;
+          case 'configSync':
+          case 'configUpdate':
+            setSoggfyConfig(message.data);
             break;
           default:
             break;
@@ -250,12 +257,23 @@ function App() {
     <div className="app">
       <header>
         <h1>Soggfy Web Downloader</h1>
-        <div className="status-indicators">
+        <div className="header-actions">
+          <button onClick={() => setShowSettings(true)} className="settings-button">
+            Settings
+          </button>
           <span className={`indicator ${soggfyConnected ? 'connected' : 'disconnected'}`}>
             Soggfy
           </span>
         </div>
       </header>
+
+      {showSettings && (
+        <Settings
+          config={soggfyConfig}
+          onClose={() => setShowSettings(false)}
+          onConfigUpdate={setSoggfyConfig}
+        />
+      )}
 
       <div className="content">
         <form onSubmit={handleSubmit} className="url-form">

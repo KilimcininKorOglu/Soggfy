@@ -73,9 +73,25 @@ header h1 {
   background-clip: text;
 }
 
-.status-indicators {
+.header-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-button {
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.settings-button:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .indicator {

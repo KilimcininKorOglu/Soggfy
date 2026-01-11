@@ -67,6 +67,10 @@ queue.on('soggfyDisconnected', () => {
   broadcast('soggfyStatus', { connected: false });
 });
 
+queue.on('configSync', (config) => {
+  broadcast('configSync', config);
+});
+
 // Connect to Soggfy
 soggfy.connect();
 
@@ -171,6 +175,30 @@ app.delete('/api/queue/:trackId', (req, res) => {
 app.post('/api/queue/skip', (req, res) => {
   const skipped = queue.skipCurrent();
   res.json({ success: skipped });
+});
+
+// Get Soggfy config
+app.get('/api/config', (req, res) => {
+  const config = queue.getConfig();
+  if (!config) {
+    return res.status(503).json({ error: 'Config not available yet' });
+  }
+  res.json(config);
+});
+
+// Update Soggfy config
+app.put('/api/config', (req, res) => {
+  try {
+    const updates = req.body;
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No config updates provided' });
+    }
+    const config = queue.updateConfig(updates);
+    broadcast('configUpdate', config);
+    res.json({ success: true, config });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 // Health check
