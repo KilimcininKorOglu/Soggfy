@@ -167,13 +167,13 @@ export default class PlayerStateTracker {
         let featuresMeta;
 
         try {
-            analysisMeta = await _resources__WEBPACK_IMPORTED_MODULE_1__["default"].getTrackAnalysisWG(track.uri);
+            analysisMeta = await Resources.getTrackAnalysisWG(track.uri);
         } catch (e) {
             analysisMeta = {};
         }
 
         try {
-            featuresMeta = await _resources__WEBPACK_IMPORTED_MODULE_1__["default"].getTrackFeaturesWG(track.uri);
+            featuresMeta = await Resources.getTrackFeaturesWG(track.uri);
         } catch (e) {
             featuresMeta = {};
         }
@@ -197,7 +197,7 @@ export default class PlayerStateTracker {
             publisher: extraMeta.album.label,
             language: extraMeta.language_of_performance?.[0],
             isrc: extraMeta.external_id?.find(v => v.type === "isrc")?.id,
-            url: Resources.getOpenTrackURL(track.url),
+            url: Resources.getOpenTrackURL(track.uri),
             explicit: meta.is_explicit ? "1" : undefined,
             comment: JSON.stringify({ playerMeta: meta, meta: extraMeta, analysisMeta: analysisMeta, featuresMeta: featuresMeta }),
             BPM: featuresMeta.tempo ? featuresMeta.tempo : undefined // This needs to be set to :s:0 or it breaks in OGG output
@@ -216,7 +216,7 @@ export default class PlayerStateTracker {
             publisher: meta.show.publisher,
             date: meta.release_date,
             language: meta.language,
-            url: Resources.getOpenTrackURL(track.url),
+            url: Resources.getOpenTrackURL(track.uri),
             podcast: "1",
             explicit: meta.explicit ? "1" : undefined,
             comment: JSON.stringify({ playerMeta: meta })
