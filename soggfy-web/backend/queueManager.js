@@ -137,6 +137,7 @@ class QueueManager {
         this.currentTrack.uri,
         this.deviceId
       );
+      console.log(`Playback started for: ${this.currentTrack.name}`);
     } catch (error) {
       console.error('Failed to start playback:', error.message);
       this.currentTrack.status = 'error';
@@ -147,6 +148,13 @@ class QueueManager {
 
       setTimeout(() => this.processQueue(), 2000);
     }
+  }
+
+  // Calculate estimated track duration for timeout
+  getTrackTimeout(track) {
+    // Track duration + 30 seconds buffer for conversion
+    const durationMs = track.duration || 180000; // Default 3 min
+    return durationMs + 30000;
   }
 
   handleDownloadStatus(data) {
@@ -161,20 +169,33 @@ class QueueManager {
         [trackUri, statusInfo] = entries[0];
       }
     } else if (data.playbackId) {
+      // playbackId messages without trackUri are usually from tracks played outside our control
+      // or stale messages from previous playbacks - ignore ERROR status from these
+      if (data.status === DownloadStatus.ERROR) {
+        console.log(`Ignoring playbackId ERROR (likely stale): ${data.message}`);
+        return;
+      }
       statusInfo = data;
     }
 
     if (!statusInfo) return;
+    if (!this.currentTrack) return;
 
-    // Match by trackUri
-    if (this.currentTrack && trackUri) {
+    // Match by trackUri if available
+    if (trackUri) {
       if (this.currentTrack.uri !== trackUri) {
         console.log(`Status for different track: ${trackUri}`);
         return;
       }
+    } else if (data.playbackId) {
+      // For playbackId messages, only process if track started recently (within 5s)
+      // This helps filter out stale status messages from previous tracks
+      const elapsed = Date.now() - (this.currentTrack.startedAt || 0);
+      if (elapsed > 5000) {
+        console.log(`Ignoring stale playbackId status (${elapsed}ms since start)`);
+        return;
+      }
     }
-
-    if (!this.currentTrack) return;
 
     const status = statusInfo.status;
 

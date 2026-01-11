@@ -21,7 +21,7 @@ Web-based interface for Soggfy that allows downloading Spotify tracks via URL in
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
-3. Add `http://localhost:3001/auth/callback` as Redirect URI
+3. Add `http://127.0.0.1:3001/auth/callback` as Redirect URI
 4. Copy Client ID and Client Secret
 
 ### 2. Backend Setup

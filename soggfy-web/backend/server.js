@@ -75,7 +75,7 @@ app.get('/auth/callback', async (req, res) => {
   const { code } = req.query;
 
   try {
-    await spotify.exchangeCode(code, `http://localhost:${PORT}/auth/callback`);
+    await spotify.exchangeCode(code, `http://127.0.0.1:${PORT}/auth/callback`);
     broadcast('authStatus', { authenticated: true });
     res.send(`
       <!DOCTYPE html>
@@ -107,7 +107,7 @@ app.get('/auth/callback', async (req, res) => {
 
 // Get auth URL
 app.get('/api/auth/url', (req, res) => {
-  const url = spotify.getAuthUrl(`http://localhost:${PORT}/auth/callback`);
+  const url = spotify.getAuthUrl(`http://127.0.0.1:${PORT}/auth/callback`);
   res.json({ url });
 });
 
