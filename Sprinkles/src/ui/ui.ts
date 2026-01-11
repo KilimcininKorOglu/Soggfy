@@ -182,7 +182,7 @@ export default class UI {
 
         return UIC.createSettingOverlay(
             UIC.section("General",
-                UIC.row("Playback speed",           UIC.slider("playbackSpeed", { min: 1, max: 50, step: 1, formatter: val => val + "x" }, onChange)),
+                UIC.row("Playback speed",           UIC.slider("playbackSpeed", { min: 1, max: 30, step: 1, formatter: val => val + "x" }, onChange)),
                 UIC.row("Output format",            UIC.select("outputFormat", Object.getOwnPropertyNames(defaultFormats), onFormatChange)),
                 customFormatSection,
                 UIC.row("Download podcasts",        UIC.toggle("downloadPodcasts", onChange)),
