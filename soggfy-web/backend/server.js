@@ -12,6 +12,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Auth configuration
+const AUTH_ENABLED = process.env.AUTH_ENABLED === 'true';
+const AUTH_USER = process.env.AUTH_USER || 'admin';
+const AUTH_PASSWORD = process.env.AUTH_PASSWORD || 'changeme';
+
+// Session storage (simple in-memory)
+const sessions = new Set();
+
+// Auth middleware
+const authMiddleware = (req, res, next) => {
+  if (!AUTH_ENABLED) return next();
+  
+  const sessionId = req.headers['x-session-id'];
+  if (sessionId && sessions.has(sessionId)) {
+    return next();
+  }
+  
+  res.status(401).json({ error: 'Unauthorized' });
+};
+
 // Initialize services
 const soggfy = new SoggfyClient();
 const spotify = new SpotifyAPI(
@@ -110,18 +130,18 @@ app.get('/auth/callback', async (req, res) => {
 });
 
 // Get auth URL
-app.get('/api/auth/url', (req, res) => {
+app.get('/api/auth/url', authMiddleware, (req, res) => {
   const url = spotify.getAuthUrl(`http://127.0.0.1:${PORT}/auth/callback`);
   res.json({ url });
 });
 
 // Check auth status
-app.get('/api/auth/status', (req, res) => {
+app.get('/api/auth/status', authMiddleware, (req, res) => {
   res.json({ authenticated: !!spotify.userAccessToken });
 });
 
 // Get available Spotify devices
-app.get('/api/devices', async (req, res) => {
+app.get('/api/devices', authMiddleware, async (req, res) => {
   try {
     const devices = await spotify.getDevices();
     res.json({ devices });
@@ -131,14 +151,14 @@ app.get('/api/devices', async (req, res) => {
 });
 
 // Set active device
-app.post('/api/device', (req, res) => {
+app.post('/api/device', authMiddleware, (req, res) => {
   const { deviceId } = req.body;
   queue.setDeviceId(deviceId);
   res.json({ success: true });
 });
 
 // Add URL to download queue (supports track, album, playlist)
-app.post('/api/download', async (req, res) => {
+app.post('/api/download', authMiddleware, async (req, res) => {
   try {
     const { url } = req.body;
 
@@ -154,31 +174,31 @@ app.post('/api/download', async (req, res) => {
 });
 
 // Get queue status
-app.get('/api/queue', (req, res) => {
+app.get('/api/queue', authMiddleware, (req, res) => {
   res.json(queue.getStatus());
 });
 
 // Clear completed tracks
-app.post('/api/queue/clear', (req, res) => {
+app.post('/api/queue/clear', authMiddleware, (req, res) => {
   queue.clearCompleted();
   res.json({ success: true });
 });
 
 // Remove track from queue
-app.delete('/api/queue/:trackId', (req, res) => {
+app.delete('/api/queue/:trackId', authMiddleware, (req, res) => {
   const { trackId } = req.params;
   const removed = queue.removeFromQueue(trackId);
   res.json({ success: removed });
 });
 
 // Skip current track
-app.post('/api/queue/skip', (req, res) => {
+app.post('/api/queue/skip', authMiddleware, (req, res) => {
   const skipped = queue.skipCurrent();
   res.json({ success: skipped });
 });
 
 // Get Soggfy config
-app.get('/api/config', (req, res) => {
+app.get('/api/config', authMiddleware, (req, res) => {
   const config = queue.getConfig();
   if (!config) {
     return res.status(503).json({ error: 'Config not available yet' });
@@ -187,7 +207,7 @@ app.get('/api/config', (req, res) => {
 });
 
 // Update Soggfy config
-app.put('/api/config', (req, res) => {
+app.put('/api/config', authMiddleware, (req, res) => {
   try {
     const updates = req.body;
     if (!updates || Object.keys(updates).length === 0) {
@@ -201,14 +221,45 @@ app.put('/api/config', (req, res) => {
   }
 });
 
-// Health check
+// Health check (public - returns auth requirement info)
 app.get('/api/health', (req, res) => {
+  const sessionId = req.headers['x-session-id'];
+  const isAuthenticated = !AUTH_ENABLED || (sessionId && sessions.has(sessionId));
+  
   res.json({
     status: 'ok',
+    authRequired: AUTH_ENABLED,
+    authenticated: isAuthenticated,
     soggfyConnected: soggfy.isConnected,
     spotifyAuthenticated: !!spotify.userAccessToken,
     autoSelectDevice: process.env.AUTO_SELECT_DEVICE !== 'false'
   });
+});
+
+// Login endpoint
+app.post('/api/login', (req, res) => {
+  if (!AUTH_ENABLED) {
+    return res.json({ success: true, message: 'Auth not enabled' });
+  }
+  
+  const { username, password } = req.body;
+  
+  if (username === AUTH_USER && password === AUTH_PASSWORD) {
+    const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    sessions.add(sessionId);
+    res.json({ success: true, sessionId });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// Logout endpoint
+app.post('/api/logout', (req, res) => {
+  const sessionId = req.headers['x-session-id'];
+  if (sessionId) {
+    sessions.delete(sessionId);
+  }
+  res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 3001;

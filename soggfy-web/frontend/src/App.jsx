@@ -18,8 +18,22 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
   const [autoSelectDevice, setAutoSelectDevice] = useState(true);
+  const [authRequired, setAuthRequired] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem('sessionId') || '');
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+
+  // Configure axios to send session header
+  useEffect(() => {
+    if (sessionId) {
+      axios.defaults.headers.common['X-Session-Id'] = sessionId;
+    } else {
+      delete axios.defaults.headers.common['X-Session-Id'];
+    }
+  }, [sessionId]);
 
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -93,18 +107,52 @@ function App() {
   const checkHealth = async () => {
     try {
       const response = await axios.get(`${API_BASE}/health`);
+      setAuthRequired(response.data.authRequired);
+      setLoggedIn(response.data.authenticated);
       setSoggfyConnected(response.data.soggfyConnected);
       setAuthenticated(response.data.spotifyAuthenticated);
       setAutoSelectDevice(response.data.autoSelectDevice !== false);
-      if (response.data.spotifyAuthenticated) {
-        fetchDevices(response.data.autoSelectDevice !== false);
-      }
-      if (response.data.soggfyConnected) {
-        fetchConfig();
+      
+      // Only proceed if authenticated (or auth not required)
+      if (response.data.authenticated) {
+        if (response.data.spotifyAuthenticated) {
+          fetchDevices(response.data.autoSelectDevice !== false);
+        }
+        if (response.data.soggfyConnected) {
+          fetchConfig();
+        }
       }
     } catch (error) {
       console.error('Health check failed:', error);
     }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    
+    try {
+      const response = await axios.post(`${API_BASE}/login`, loginForm);
+      if (response.data.sessionId) {
+        setSessionId(response.data.sessionId);
+        localStorage.setItem('sessionId', response.data.sessionId);
+        setLoggedIn(true);
+        checkHealth();
+      }
+    } catch (error) {
+      setLoginError(error.response?.data?.error || 'Login failed');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE}/logout`);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+    setSessionId('');
+    localStorage.removeItem('sessionId');
+    setLoggedIn(false);
   };
 
   const fetchConfig = async () => {
@@ -217,6 +265,35 @@ function App() {
     );
   }
 
+  if (authRequired && !loggedIn) {
+    return (
+      <div className="app">
+        <div className="auth-container">
+          <h1>Soggfy Web UI</h1>
+          <p>Please log in to continue</p>
+          <form onSubmit={handleLogin} className="login-form">
+            {loginError && <div className="login-error">{loginError}</div>}
+            <input
+              type="text"
+              placeholder="Username"
+              value={loginForm.username}
+              onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={loginForm.password}
+              onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+              required
+            />
+            <button type="submit" className="auth-button">Login</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   if (!soggfyConnected) {
     return (
       <div className="app error">
@@ -275,6 +352,11 @@ function App() {
           <button onClick={() => setShowSettings(true)} className="settings-button">
             Settings
           </button>
+          {authRequired && (
+            <button onClick={handleLogout} className="logout-button">
+              Logout
+            </button>
+          )}
           <span className={`indicator ${soggfyConnected ? 'connected' : 'disconnected'}`}>
             Soggfy
           </span>
