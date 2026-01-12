@@ -2,11 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const http = require('http');
+const path = require('path');
 require('dotenv').config();
 
 const { SoggfyClient } = require('./soggfyClient');
 const SpotifyAPI = require('./spotifyAuth');
 const QueueManager = require('./queueManager');
+const StatsManager = require('./statsManager');
 
 const app = express();
 app.use(cors());
@@ -39,6 +41,13 @@ const spotify = new SpotifyAPI(
   process.env.SPOTIFY_CLIENT_SECRET
 );
 const queue = new QueueManager(soggfy, spotify);
+
+// Initialize stats manager
+const statsDbPath = path.join(process.env.LOCALAPPDATA || '.', 'Soggfy', 'stats.db');
+const stats = new StatsManager(statsDbPath);
+
+// Wire up stats tracking to queue manager
+queue.setStatsManager(stats);
 
 // Create HTTP server for both Express and WebSocket
 const server = http.createServer(app);
@@ -259,6 +268,94 @@ app.post('/api/logout', (req, res) => {
   if (sessionId) {
     sessions.delete(sessionId);
   }
+  res.json({ success: true });
+});
+
+// ==================== STATS API ====================
+
+// Get all statistics
+app.get('/api/stats', authMiddleware, (req, res) => {
+  res.json(stats.getStats());
+});
+
+// Get totals only (fast)
+app.get('/api/stats/totals', authMiddleware, (req, res) => {
+  res.json(stats.getTotals());
+});
+
+// Get chart data by period
+app.get('/api/stats/chart/:period', authMiddleware, (req, res) => {
+  const { period } = req.params;
+  switch (period) {
+    case 'daily':
+      res.json(stats.getDailyChart(30));
+      break;
+    case 'weekly':
+      res.json(stats.getWeeklyChart(12));
+      break;
+    case 'monthly':
+      res.json(stats.getMonthlyChart(12));
+      break;
+    default:
+      res.status(400).json({ error: 'Invalid period. Use daily, weekly, or monthly.' });
+  }
+});
+
+// Get hourly heatmap
+app.get('/api/stats/heatmap', authMiddleware, (req, res) => {
+  res.json(stats.getHourlyHeatmap());
+});
+
+// Get top artists or albums
+app.get('/api/stats/top/:type', authMiddleware, (req, res) => {
+  const { type } = req.params;
+  const limit = parseInt(req.query.limit) || 10;
+
+  switch (type) {
+    case 'artists':
+      res.json(stats.getTopArtists(limit));
+      break;
+    case 'albums':
+      res.json(stats.getTopAlbums(limit));
+      break;
+    default:
+      res.status(400).json({ error: 'Invalid type. Use artists or albums.' });
+  }
+});
+
+// Get recent downloads
+app.get('/api/stats/recent', authMiddleware, (req, res) => {
+  const limit = parseInt(req.query.limit) || 20;
+  res.json(stats.getRecentDownloads(limit));
+});
+
+// Search downloads
+app.get('/api/stats/search', authMiddleware, (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    return res.status(400).json({ error: 'Query parameter "q" is required.' });
+  }
+  const limit = parseInt(req.query.limit) || 50;
+  res.json(stats.searchDownloads(q, limit));
+});
+
+// Export as JSON
+app.get('/api/stats/export/json', authMiddleware, (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', 'attachment; filename=soggfy-stats.json');
+  res.json(stats.exportJSON());
+});
+
+// Export as CSV
+app.get('/api/stats/export/csv', authMiddleware, (req, res) => {
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename=soggfy-stats.csv');
+  res.send(stats.exportCSV());
+});
+
+// Reset all statistics
+app.delete('/api/stats/reset', authMiddleware, (req, res) => {
+  stats.reset();
   res.json({ success: true });
 });
 

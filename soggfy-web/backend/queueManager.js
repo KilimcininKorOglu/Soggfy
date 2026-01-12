@@ -18,6 +18,7 @@ class QueueManager {
     this.deviceId = null;
     this.soggfyConfig = null;
     this.eventListeners = new Map();
+    this.statsManager = null;
 
     // Listen for config sync from Soggfy
     soggfyClient.on(MessageType.SYNC_CONFIG, (data) => {
@@ -58,6 +59,28 @@ class QueueManager {
 
   setDeviceId(deviceId) {
     this.deviceId = deviceId;
+  }
+
+  setStatsManager(statsManager) {
+    this.statsManager = statsManager;
+  }
+
+  trackStats(track, status) {
+    if (!this.statsManager) return;
+
+    try {
+      this.statsManager.trackDownload({
+        id: track.id,
+        name: track.name,
+        artist: track.artist,
+        album: track.album,
+        duration: track.duration,
+        fileSize: track.fileSize || 0,
+        status: status
+      });
+    } catch (error) {
+      console.error('Failed to track stats:', error.message);
+    }
   }
 
   async addUrl(spotifyUrl) {
@@ -142,6 +165,7 @@ class QueueManager {
       console.error('Failed to start playback:', error.message);
       this.currentTrack.status = 'error';
       this.currentTrack.error = error.message;
+      this.trackStats(this.currentTrack, 'error');
       this.completedTracks.unshift(this.currentTrack);
       this.currentTrack = null;
       this.emit('queueUpdate', this.getStatus());
@@ -212,6 +236,7 @@ class QueueManager {
       this.currentTrack.status = 'completed';
       this.currentTrack.completedAt = Date.now();
       this.currentTrack.path = statusInfo.path;
+      this.trackStats(this.currentTrack, 'completed');
       this.completedTracks.unshift(this.currentTrack);
       this.currentTrack = null;
       this.emit('queueUpdate', this.getStatus());
@@ -221,6 +246,7 @@ class QueueManager {
       console.error(`Download failed: ${this.currentTrack.name}`);
       this.currentTrack.status = 'error';
       this.currentTrack.error = statusInfo.message || 'Download failed';
+      this.trackStats(this.currentTrack, 'error');
       this.completedTracks.unshift(this.currentTrack);
       this.currentTrack = null;
       this.emit('queueUpdate', this.getStatus());
@@ -255,6 +281,7 @@ class QueueManager {
   skipCurrent() {
     if (this.currentTrack) {
       this.currentTrack.status = 'skipped';
+      this.trackStats(this.currentTrack, 'skipped');
       this.completedTracks.unshift(this.currentTrack);
       this.currentTrack = null;
       this.emit('queueUpdate', this.getStatus());

@@ -218,6 +218,32 @@ header h1::before {
   color: var(--text-primary);
 }
 
+.stats-button {
+  padding: 10px 18px;
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  border: 1px solid rgba(30, 215, 96, 0.3);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats-button::before {
+  content: '📊';
+  font-size: 1rem;
+}
+
+.stats-button:hover {
+  background: rgba(30, 215, 96, 0.25);
+  border-color: rgba(30, 215, 96, 0.5);
+}
+
 /* Status Indicator */
 .indicator {
   padding: 6px 12px;
