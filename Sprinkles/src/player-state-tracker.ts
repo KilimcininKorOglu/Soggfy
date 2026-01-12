@@ -137,8 +137,18 @@ export default class PlayerStateTracker {
                 coverPath = path + PathTemplate.render(coverTemplate, vars);
             }
         }
+        
+        // Build track path with template
+        let trackPath = path + PathTemplate.render(template, vars);
+        
+        // Append track ID to filename (before extension) for reliable skip detection
+        const trackId = playback.item?.uri?.split(':').pop() || "";
+        if (trackId) {
+            trackPath = trackPath.replace(/(\.[^.\/\\]+)$/, ` - ${trackId}$1`);
+        }
+        
         return {
-            track: path + PathTemplate.render(template, vars),
+            track: trackPath,
             cover: coverPath,
             canvas: path + PathTemplate.render(config.savePaths.canvas, vars)
         };
