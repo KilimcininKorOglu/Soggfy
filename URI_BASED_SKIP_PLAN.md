@@ -4,6 +4,10 @@
 
 Mevcut `skipDownloadedTracks` sistemi dosya sistemindeki dosya adı pattern'lerine bakarak çalışıyor. Bu yaklaşımın ciddi sorunları var:
 
+> **NOT:** Bu dokumanda iki alternatif çözüm sunulmaktadır:
+> 1. **Veritabanı Tabanlı** (Faz 1-7) - Web UI backend gerektirir
+> 2. **Dosya Adı Tabanlı** (Önerilen Alternatif) - Standalone çalışır, daha basit
+
 ### Mevcut Sistemin Sorunları
 
 1. **Dosya Yeniden Adlandırma**: Dosya adını değiştirirsen, aynı şarkı tekrar indirilir
@@ -293,6 +297,255 @@ SpotifyOggDumper/
 6. **Farklı versiyon (remaster)** → Yeni URI, indirilmeli
 7. **Podcast bölümü** → `spotify:episode:XXX` olarak kaydedilmeli
 
-## Sonuç
+## Sonuç (Veritabanı Yaklaşımı)
 
 URI-based skip sistemi, dosya-based sisteme göre çok daha güvenilir ve hızlı. Mevcut Web UI backend altyapısı (stats.db) zaten bu özellik için uygun. MVP yaklaşımıyla 1 günde çalışan bir sistem elde edilebilir.
+
+---
+
+# Önerilen Alternatif: Dosya Adına Track ID Ekleme
+
+## Konsept
+
+Web UI backend'e bağımlılık olmadan, dosya adının kendisine Spotify Track ID'sini ekleyerek skip kontrolü yapmak.
+
+### Örnek
+
+```
+Mevcut Format:
+Queen/A Night at the Opera/11. Bohemian Rhapsody.mp3
+
+Yeni Format:
+Queen/A Night at the Opera/11. Bohemian Rhapsody - 6h240MaWo49TJ8Q8Lq8WMC.mp3
+                                                   └─────────────────────┘
+                                                      22 karakterlik ID
+```
+
+### Avantajları
+
+| Avantaj | Açıklama |
+|---------|----------|
+| **Standalone** | Web UI backend'e bağımlılık yok, Soggfy tek başına çalışır |
+| **Taşınabilir** | Dosya taşınsa, klasör değişse bile ID dosyada kalır |
+| **Basit Kontrol** | Dosya adında ID var mı? Varsa skip |
+| **Görsel** | Hangi dosyanın hangi şarkı olduğu dosya adından belli |
+| **Duplicate Tespiti** | Aynı ID'ye sahip birden fazla dosya kolayca bulunur |
+| **Mevcut Altyapı** | `SearchPathTree` mantığı küçük değişiklikle çalışır |
+| **Geriye Uyumlu** | Eski dosyalar çalışmaya devam eder, yeni indirmeler ID içerir |
+
+### Dezavantajları
+
+| Dezavantaj | Çözüm |
+|------------|-------|
+| Dosya adları uzar (+23 karakter) | Genelde sorun değil, max path limitine dikkat |
+| Mevcut indirmeler ID içermez | Opsiyonel migration tool veya manuel yeniden indirme |
+| ID görünür olması istenmiyor olabilir | Config'de opsiyonel yapılabilir |
+
+## Uygulama Planı
+
+### Adım 1: Yeni Path Template Değişkeni
+
+`Sprinkles/src/path-template.ts` dosyasına yeni değişken ekle:
+
+```typescript
+{
+    name: "track_id",
+    desc: "Spotify Track ID (22 karakter)",
+    pattern: `[a-zA-Z0-9]{22}`,
+    getValue: m => m.track_id || m.uri?.split(':').pop() || ""
+}
+```
+
+### Adım 2: Metadata'ya Track ID Ekle
+
+`Sprinkles/src/player-state-tracker.ts` dosyasında metadata'ya track ID ekle:
+
+```typescript
+private getSavePaths(type: string, meta: any, playback: PlayerState) {
+    // ... mevcut kod ...
+    
+    // Track ID'yi metadata'ya ekle
+    meta.track_id = playback.item?.uri?.split(':').pop() || '';
+    
+    let vars = PathTemplate.getVarsFromMetadata(meta, playback);
+    // ...
+}
+```
+
+### Adım 3: Varsayılan Template Güncelleme
+
+`Sprinkles/src/config.ts` dosyasında varsayılan template'i güncelle:
+
+```typescript
+savePaths: {
+    basePath: "",
+    track: "{artist_name}/{album_name}{multi_disc_path}/{track_num}. {track_name} - {track_id}.ogg",
+    episode: "Podcasts/{artist_name}/{album_name}/{release_date} - {track_name} - {track_id}.ogg",
+    canvas: "{artist_name}/{album_name}{multi_disc_path}/Canvas/{track_num}. {track_name}.mp4",
+    invalidCharRepl: "unicode",
+}
+```
+
+### Adım 4: Skip Kontrolünü Basitleştir
+
+`SpotifyOggDumper/StateManager.cpp` dosyasında `SearchPathTree` fonksiyonunu güncelle veya yeni bir kontrol ekle:
+
+**Seçenek A: Mevcut SearchPathTree'yi Kullan**
+Pattern'de `{track_id}` regex olarak eşleşir, mevcut sistem çalışmaya devam eder.
+
+**Seçenek B: Basit ID Arama (Daha Hızlı)**
+```cpp
+bool IsTrackDownloaded(const std::string& basePath, const std::string& trackId) {
+    // Recursive olarak tüm dosyaları tara
+    for (auto& entry : fs::recursive_directory_iterator(basePath)) {
+        if (entry.is_regular_file()) {
+            auto filename = entry.path().stem().string();
+            // Dosya adının sonunda " - {trackId}" var mı?
+            if (filename.ends_with(" - " + trackId)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+```
+
+**Seçenek C: Index Dosyası (En Hızlı)**
+```cpp
+// İndirilen tüm track ID'lerini bir index dosyasında tut
+// %localappdata%/Soggfy/downloaded_tracks.txt
+// Her satır bir track ID
+
+void AddToIndex(const std::string& trackId) {
+    std::ofstream index(_dataDir / "downloaded_tracks.txt", std::ios::app);
+    index << trackId << "\n";
+}
+
+bool IsInIndex(const std::string& trackId) {
+    // Index dosyasını belleğe yükle (lazy load)
+    // Set veya unordered_set ile O(1) lookup
+    return _downloadedTracks.contains(trackId);
+}
+```
+
+### Adım 5: UI'da Template Değişkeni Gösterme
+
+`Sprinkles/src/ui/ui.ts` dosyasında path variables listesine `{track_id}` ekle - zaten `PathTemplate.Vars` üzerinden otomatik gösterilecek.
+
+## Dosya Yapısı Değişiklikleri
+
+```
+Sprinkles/src/
+├── config.ts              # Varsayılan template güncelle
+├── path-template.ts       # {track_id} değişkeni ekle
+├── player-state-tracker.ts # Metadata'ya track_id ekle
+
+SpotifyOggDumper/
+├── StateManager.cpp       # (Opsiyonel) Index dosyası mantığı
+```
+
+## Örnek Çıktılar
+
+### Müzik Dosyaları
+```
+G:\Spotify\
+├── Queen/
+│   └── A Night at the Opera/
+│       ├── 01. Death on Two Legs - 4pbJqGIASGPr0ZtwnkXjAj.mp3
+│       ├── 02. Lazing on a Sunday Afternoon - 1mCsF9Tw4cDvVvXb1yVkPf.mp3
+│       └── 11. Bohemian Rhapsody - 6h240MaWo49TJ8Q8Lq8WMC.mp3
+├── Daft Punk/
+│   └── Random Access Memories/
+│       ├── 01. Give Life Back to Music - 0DiWol3AO6WpXZgp0goxAV.mp3
+│       └── 08. Get Lucky - 69kOkLUCkxIZYexIgSG8rq.mp3
+```
+
+### Podcast Bölümleri
+```
+G:\Spotify\
+└── Podcasts/
+    └── Joe Rogan Experience/
+        └── JRE MMA Show/
+            └── 2024-01-15 - #148 with Georges St-Pierre - 3xKsf9qdHzyON2fVYh1G8E.mp3
+```
+
+## Index Dosyası Formatı (Seçenek C)
+
+```
+# %localappdata%/Soggfy/downloaded_tracks.txt
+# Her satır bir Spotify Track/Episode ID
+6h240MaWo49TJ8Q8Lq8WMC
+4pbJqGIASGPr0ZtwnkXjAj
+1mCsF9Tw4cDvVvXb1yVkPf
+69kOkLUCkxIZYexIgSG8rq
+3xKsf9qdHzyON2fVYh1G8E
+```
+
+**Index Yönetimi:**
+- Parça indirildiğinde → ID'yi index'e ekle
+- Skip kontrolünde → Index'te var mı bak (O(1))
+- Dosya silindiğinde → Index'ten çıkar (opsiyonel cleanup komutu)
+
+## Uygulama Önceliği
+
+| Adım | Zorluk | Dosya | Tahmini Süre |
+|------|--------|-------|--------------|
+| 1. Path değişkeni | Kolay | path-template.ts | 30 dk |
+| 2. Metadata | Kolay | player-state-tracker.ts | 30 dk |
+| 3. Varsayılan template | Kolay | config.ts | 10 dk |
+| 4. Skip kontrolü | Orta | StateManager.cpp | 2 saat |
+| 5. UI | Otomatik | - | 0 dk |
+
+**Toplam:** ~3-4 saat
+
+## Migration (Mevcut Dosyalar)
+
+Mevcut dosyaları yeni formata dönüştürmek için opsiyonel bir script:
+
+```python
+# migrate_filenames.py
+import os
+import re
+import spotipy  # Spotify API client
+
+def migrate_folder(base_path, sp_client):
+    for root, dirs, files in os.walk(base_path):
+        for file in files:
+            if not re.search(r' - [a-zA-Z0-9]{22}\.[^.]+$', file):
+                # ID yok, Spotify'dan bul
+                track_name = extract_track_name(file)
+                artist_name = extract_artist_from_path(root)
+                
+                results = sp_client.search(q=f"track:{track_name} artist:{artist_name}", type='track', limit=1)
+                if results['tracks']['items']:
+                    track_id = results['tracks']['items'][0]['id']
+                    new_name = add_id_to_filename(file, track_id)
+                    os.rename(os.path.join(root, file), os.path.join(root, new_name))
+```
+
+## Config Seçeneği (Opsiyonel)
+
+ID'yi dosya adına eklemek istemeyen kullanıcılar için:
+
+```typescript
+// config.ts
+includeTrackIdInFilename: true  // Varsayılan: true
+```
+
+Eğer `false` ise, eski davranış korunur (pattern-based skip).
+
+## Sonuç
+
+**Dosya Adına Track ID Ekleme** yaklaşımı:
+- Web UI backend'e bağımlılık yok
+- Mevcut Soggfy altyapısıyla uyumlu
+- ~3-4 saatte uygulanabilir
+- Daha güvenilir skip kontrolü
+- Görsel olarak hangi dosyanın hangi şarkı olduğu belli
+
+**Önerilen Template:**
+```
+{artist_name}/{album_name}{multi_disc_path}/{track_num}. {track_name} - {track_id}
+```
+
+Bu yaklaşım, veritabanı tabanlı çözüme göre çok daha basit ve standalone çalışır.
