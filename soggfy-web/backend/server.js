@@ -53,6 +53,9 @@ queue.setStatsManager(stats);
 // Initialize playlist manager (shares database with stats)
 const playlistMgr = new PlaylistManager(stats.db, spotify);
 
+// Wire up playlist manager to queue manager for history tracking
+queue.setPlaylistManager(playlistMgr);
+
 // Create HTTP server for both Express and WebSocket
 const server = http.createServer(app);
 
