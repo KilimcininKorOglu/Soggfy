@@ -176,12 +176,69 @@ app.get('/auth/callback', async (req, res) => {
     res.send(`
       <!DOCTYPE html>
       <html>
-      <head><title>Authentication Successful</title></head>
-      <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-        <div style="background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-          <h1 style="color: #10b981; margin-bottom: 10px;">✅ Authentication Successful!</h1>
-          <p style="color: #666;">You can close this window and return to the app.</p>
+      <head>
+        <title>Authentication Successful</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #0a0a0c;
+            color: #fafafa;
+          }
+          .container {
+            background: #111114;
+            padding: 48px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            max-width: 400px;
+          }
+          .icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(30, 215, 96, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 32px;
+          }
+          h1 {
+            color: #1ed760;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+          }
+          p {
+            color: #a1a1aa;
+            font-size: 0.95rem;
+            line-height: 1.5;
+          }
+          .close-hint {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.85rem;
+            color: #52525b;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon">&#10003;</div>
+          <h1>Authentication Successful</h1>
+          <p>Your Spotify account has been connected successfully.</p>
+          <p class="close-hint">You can close this window and return to Soggfy Web UI.</p>
         </div>
+        <script>setTimeout(() => window.close(), 3000);</script>
       </body>
       </html>
     `);
@@ -189,11 +246,69 @@ app.get('/auth/callback', async (req, res) => {
     res.status(400).send(`
       <!DOCTYPE html>
       <html>
-      <head><title>Authentication Failed</title></head>
-      <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #fee2e2;">
-        <div style="background: white; padding: 40px; border-radius: 16px; text-align: center;">
-          <h1 style="color: #ef4444;">❌ Authentication Failed</h1>
-          <p style="color: #666;">${error.message}</p>
+      <head>
+        <title>Authentication Failed</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #0a0a0c;
+            color: #fafafa;
+          }
+          .container {
+            background: #111114;
+            padding: 48px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            max-width: 400px;
+          }
+          .icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(239, 68, 68, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 32px;
+          }
+          h1 {
+            color: #ef4444;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+          }
+          p {
+            color: #a1a1aa;
+            font-size: 0.95rem;
+            line-height: 1.5;
+          }
+          .error-details {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #fca5a5;
+            word-break: break-word;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon">&#10007;</div>
+          <h1>Authentication Failed</h1>
+          <p>Unable to connect your Spotify account.</p>
+          <div class="error-details">${error.message}</div>
         </div>
       </body>
       </html>
