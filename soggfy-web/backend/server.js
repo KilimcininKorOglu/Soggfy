@@ -11,6 +11,7 @@ const QueueManager = require('./queueManager');
 const StatsManager = require('./statsManager');
 const PlaylistManager = require('./playlistManager');
 const Scheduler = require('./scheduler');
+const SearchHistory = require('./searchHistory');
 
 const app = express();
 app.use(cors());
@@ -59,6 +60,9 @@ queue.setPlaylistManager(playlistMgr);
 
 // Initialize scheduler (shares database with stats and playlist)
 const scheduler = new Scheduler(stats.db, queue, playlistMgr);
+
+// Initialize search history (shares database with stats)
+const searchHistory = new SearchHistory(stats.db);
 
 // Graceful shutdown handlers
 process.on('SIGTERM', () => {
@@ -656,6 +660,147 @@ app.post('/api/schedules/validate-cron', authMiddleware, (req, res) => {
   } else {
     res.json({ valid: false, error: 'Invalid cron expression' });
   }
+});
+
+// ==================== SEARCH API ====================
+
+// Search Spotify
+app.get('/api/search', authMiddleware, async (req, res) => {
+  try {
+    const { q, types, limit } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    const typeArray = types ? types.split(',') : ['track', 'album', 'artist', 'playlist'];
+    const results = await spotify.search(q, typeArray, parseInt(limit) || 20);
+
+    const totalResults =
+      results.tracks.length +
+      results.albums.length +
+      results.artists.length +
+      results.playlists.length;
+
+    searchHistory.add(q, totalResults);
+
+    res.json(results);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get artist details
+app.get('/api/search/artist/:id', authMiddleware, async (req, res) => {
+  try {
+    const artist = await spotify.getArtist(req.params.id);
+    artist.isFavorite = searchHistory.isFavorite(req.params.id);
+    res.json(artist);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get artist albums
+app.get('/api/search/artist/:id/albums', authMiddleware, async (req, res) => {
+  try {
+    const { includeGroups } = req.query;
+    const albums = await spotify.getArtistAlbums(
+      req.params.id,
+      includeGroups || 'album,single'
+    );
+    res.json(albums);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get artist top tracks
+app.get('/api/search/artist/:id/top-tracks', authMiddleware, async (req, res) => {
+  try {
+    const tracks = await spotify.getArtistTopTracks(req.params.id);
+    res.json(tracks);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get related artists
+app.get('/api/search/artist/:id/related', authMiddleware, async (req, res) => {
+  try {
+    const artists = await spotify.getRelatedArtists(req.params.id);
+    const result = artists.map(a => ({
+      ...a,
+      isFavorite: searchHistory.isFavorite(a.id)
+    }));
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get album with tracks
+app.get('/api/search/album/:id', authMiddleware, async (req, res) => {
+  try {
+    const album = await spotify.getAlbum(req.params.id);
+    res.json(album);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get search history
+app.get('/api/search/history', authMiddleware, (req, res) => {
+  const { limit } = req.query;
+  res.json(searchHistory.getRecent(parseInt(limit) || 20));
+});
+
+// Get popular searches
+app.get('/api/search/history/popular', authMiddleware, (req, res) => {
+  const { limit } = req.query;
+  res.json(searchHistory.getPopular(parseInt(limit) || 10));
+});
+
+// Autocomplete suggestions
+app.get('/api/search/history/suggest', authMiddleware, (req, res) => {
+  const { q, limit } = req.query;
+  if (!q) return res.json([]);
+  res.json(searchHistory.searchHistory(q, parseInt(limit) || 5));
+});
+
+// Clear search history
+app.delete('/api/search/history', authMiddleware, (req, res) => {
+  searchHistory.clear();
+  res.json({ success: true });
+});
+
+// Delete single search
+app.delete('/api/search/history/:id', authMiddleware, (req, res) => {
+  searchHistory.delete(parseInt(req.params.id));
+  res.json({ success: true });
+});
+
+// Get favorite artists
+app.get('/api/search/favorites', authMiddleware, (req, res) => {
+  res.json(searchHistory.getFavorites());
+});
+
+// Add favorite artist
+app.post('/api/search/favorites', authMiddleware, async (req, res) => {
+  try {
+    const { artistId } = req.body;
+    const artist = await spotify.getArtist(artistId);
+    searchHistory.addFavorite(artist);
+    res.json({ success: true, artist });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Remove favorite artist
+app.delete('/api/search/favorites/:id', authMiddleware, (req, res) => {
+  searchHistory.removeFavorite(req.params.id);
+  res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 3001;

@@ -246,6 +246,94 @@ class SpotifyAPI {
 
     return null;
   }
+
+  // ==================== SEARCH API ====================
+
+  async search(query, types = ['track', 'album', 'artist', 'playlist'], limit = 20) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get('https://api.spotify.com/v1/search', {
+      headers: { 'Authorization': `Bearer ${this.accessToken}` },
+      params: {
+        q: query,
+        type: types.join(','),
+        limit,
+        market: 'US'
+      }
+    });
+
+    return {
+      tracks: response.data.tracks?.items || [],
+      albums: response.data.albums?.items || [],
+      artists: response.data.artists?.items || [],
+      playlists: response.data.playlists?.items || []
+    };
+  }
+
+  async getArtist(artistId) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/artists/${artistId}`,
+      { headers: { 'Authorization': `Bearer ${this.accessToken}` } }
+    );
+
+    return response.data;
+  }
+
+  async getArtistAlbums(artistId, includeGroups = 'album,single', limit = 50) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/artists/${artistId}/albums`,
+      {
+        headers: { 'Authorization': `Bearer ${this.accessToken}` },
+        params: {
+          include_groups: includeGroups,
+          limit,
+          market: 'US'
+        }
+      }
+    );
+
+    return response.data.items;
+  }
+
+  async getArtistTopTracks(artistId, market = 'US') {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/artists/${artistId}/top-tracks`,
+      {
+        headers: { 'Authorization': `Bearer ${this.accessToken}` },
+        params: { market }
+      }
+    );
+
+    return response.data.tracks;
+  }
+
+  async getRelatedArtists(artistId) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/artists/${artistId}/related-artists`,
+      { headers: { 'Authorization': `Bearer ${this.accessToken}` } }
+    );
+
+    return response.data.artists;
+  }
+
+  async getAlbum(albumId) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/albums/${albumId}`,
+      { headers: { 'Authorization': `Bearer ${this.accessToken}` } }
+    );
+
+    return response.data;
+  }
 }
 
 module.exports = SpotifyAPI;
