@@ -399,15 +399,15 @@ function Search({ onClose, sessionId }) {
                                         <section className="results-section">
                                             {activeTab === 'all' && <h3>Playlists</h3>}
                                             <div className="playlists-grid">
-                                                {filteredResults.playlists.slice(0, activeTab === 'all' ? 6 : 50).map((playlist) => (
+                                                {filteredResults.playlists.filter(p => p).slice(0, activeTab === 'all' ? 6 : 50).map((playlist) => (
                                                     <div key={playlist.id} className="playlist-result">
                                                         <img
-                                                            src={playlist.images[0]?.url}
+                                                            src={playlist.images?.[0]?.url || ''}
                                                             alt=""
                                                         />
                                                         <div className="playlist-name">{playlist.name}</div>
                                                         <div className="playlist-owner">
-                                                            by {playlist.owner?.display_name} • {playlist.tracks?.total} tracks
+                                                            by {playlist.owner?.display_name || 'Unknown'} • {playlist.tracks?.total || 0} tracks
                                                         </div>
                                                         <button
                                                             onClick={() => handleDownloadPlaylist(playlist)}
