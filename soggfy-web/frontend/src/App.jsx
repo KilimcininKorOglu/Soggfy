@@ -6,6 +6,7 @@ import Statistics from './components/Statistics';
 import Playlists from './components/Playlists';
 import History from './components/History';
 import Schedules from './components/Schedules';
+import Search from './components/Search';
 
 const API_BASE = 'http://localhost:3001/api';
 const WS_URL = 'ws://localhost:3001/ws';
@@ -24,6 +25,7 @@ function App() {
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showSchedules, setShowSchedules] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
   const [autoSelectDevice, setAutoSelectDevice] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
@@ -357,6 +359,9 @@ function App() {
       <header>
         <h1>Soggfy Web UI</h1>
         <div className="header-actions">
+          <button onClick={() => setShowSearch(true)} className="search-nav-button">
+            Search
+          </button>
           <button onClick={() => setShowPlaylists(true)} className="nav-button">
             Playlists
           </button>
@@ -415,6 +420,13 @@ function App() {
       {showSchedules && (
         <Schedules
           onClose={() => setShowSchedules(false)}
+          sessionId={sessionId}
+        />
+      )}
+
+      {showSearch && (
+        <Search
+          onClose={() => setShowSearch(false)}
           sessionId={sessionId}
         />
       )}
