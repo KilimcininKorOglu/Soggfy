@@ -353,7 +353,7 @@ function App() {
               </button>
             ))}
           </div>
-          <button onClick={fetchDevices} className="refresh-button">
+          <button onClick={() => fetchDevices(false)} className="refresh-button">
             Refresh Devices
           </button>
         </div>
