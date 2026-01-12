@@ -7,6 +7,7 @@ import Playlists from './components/Playlists';
 import History from './components/History';
 import Schedules from './components/Schedules';
 import Search from './components/Search';
+import Notifications from './components/Notifications';
 
 const API_BASE = 'http://localhost:3001/api';
 const WS_URL = 'ws://localhost:3001/ws';
@@ -26,6 +27,7 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showSchedules, setShowSchedules] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
   const [autoSelectDevice, setAutoSelectDevice] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
@@ -371,6 +373,9 @@ function App() {
           <button onClick={() => setShowSchedules(true)} className="nav-button">
             Schedules
           </button>
+          <button onClick={() => setShowNotifications(true)} className="nav-button">
+            Notifications
+          </button>
           <button onClick={() => setShowStatistics(true)} className="stats-button">
             Statistics
           </button>
@@ -427,6 +432,13 @@ function App() {
       {showSearch && (
         <Search
           onClose={() => setShowSearch(false)}
+          sessionId={sessionId}
+        />
+      )}
+
+      {showNotifications && (
+        <Notifications
+          onClose={() => setShowNotifications(false)}
           sessionId={sessionId}
         />
       )}
