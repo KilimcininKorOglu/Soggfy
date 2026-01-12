@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const cronParser = require('cron-parser');
+const { CronExpressionParser } = require('cron-parser');
 
 class Scheduler {
     constructor(db, queueManager, playlistManager) {
@@ -154,11 +154,11 @@ class Scheduler {
 
     getNextRunTime(cronExpression, timezone = 'UTC') {
         try {
-            const interval = cronParser.parseExpression(cronExpression, {
+            const parser = CronExpressionParser.parse(cronExpression, {
                 currentDate: new Date(),
                 tz: timezone
             });
-            return interval.next().getTime();
+            return parser.next().getTime();
         } catch (error) {
             console.error('Failed to parse cron expression:', error);
             return null;
@@ -167,7 +167,7 @@ class Scheduler {
 
     isValidCron(cronExpression) {
         try {
-            cronParser.parseExpression(cronExpression);
+            CronExpressionParser.parse(cronExpression);
             return true;
         } catch {
             return false;
