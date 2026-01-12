@@ -724,6 +724,28 @@ app.get('/api/schedules', authMiddleware, (req, res) => {
   res.json(scheduler.getSchedules());
 });
 
+// Get all execution history (must be before :id routes)
+app.get('/api/schedules/history', authMiddleware, (req, res) => {
+  const { limit, offset } = req.query;
+  res.json(scheduler.getExecutionHistory({
+    limit: parseInt(limit) || 50,
+    offset: parseInt(offset) || 0
+  }));
+});
+
+// Validate cron expression (must be before :id routes)
+app.post('/api/schedules/validate-cron', authMiddleware, (req, res) => {
+  const { expression, timezone } = req.body;
+  const isValid = scheduler.isValidCron(expression);
+
+  if (isValid) {
+    const nextRun = scheduler.getNextRunTime(expression, timezone);
+    res.json({ valid: true, nextRun });
+  } else {
+    res.json({ valid: false, error: 'Invalid cron expression' });
+  }
+});
+
 // Get single schedule with stats
 app.get('/api/schedules/:id', authMiddleware, (req, res) => {
   const schedule = scheduler.getSchedule(req.params.id);
@@ -788,28 +810,6 @@ app.post('/api/schedules/:id/run', authMiddleware, async (req, res) => {
 app.get('/api/schedules/:id/executions', authMiddleware, (req, res) => {
   const { limit } = req.query;
   res.json(scheduler.getScheduleExecutions(req.params.id, parseInt(limit) || 20));
-});
-
-// Get all execution history
-app.get('/api/schedules/history', authMiddleware, (req, res) => {
-  const { limit, offset } = req.query;
-  res.json(scheduler.getExecutionHistory({
-    limit: parseInt(limit) || 50,
-    offset: parseInt(offset) || 0
-  }));
-});
-
-// Validate cron expression
-app.post('/api/schedules/validate-cron', authMiddleware, (req, res) => {
-  const { expression, timezone } = req.body;
-  const isValid = scheduler.isValidCron(expression);
-
-  if (isValid) {
-    const nextRun = scheduler.getNextRunTime(expression, timezone);
-    res.json({ valid: true, nextRun });
-  } else {
-    res.json({ valid: false, error: 'Invalid cron expression' });
-  }
 });
 
 // ==================== SEARCH API ====================
