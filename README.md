@@ -64,17 +64,17 @@ Artist/Album/01. Song Name - 6h240MaWo49TJ8Q8Lq8WMC.mp3
 ```
 
 ### Path Template Variables
-| Variable | Description |
-|----------|-------------|
-| `{track_name}` | Track name |
-| `{artist_name}` | Artist name |
+| Variable             | Description                   |
+|----------------------|-------------------------------|
+| `{track_name}`       | Track name                    |
+| `{artist_name}`      | Artist name                   |
 | `{all_artist_names}` | All artists (comma separated) |
-| `{album_name}` | Album name |
-| `{track_num}` | Track number |
-| `{release_year}` | Release year |
-| `{release_date}` | Release date (YYYY-MM-DD) |
-| `{multi_disc_path}` | `/CD X` if multi-disc |
-| `{playlist_name}` | Playlist name |
+| `{album_name}`       | Album name                    |
+| `{track_num}`        | Track number                  |
+| `{release_year}`     | Release year                  |
+| `{release_date}`     | Release date (YYYY-MM-DD)     |
+| `{multi_disc_path}`  | `/CD X` if multi-disc         |
+| `{playlist_name}`    | Playlist name                 |
 
 ## Notes
 - Songs are only downloaded if played from start to finish, without seeking (pausing is fine).
