@@ -110,19 +110,19 @@
 }
 
 .stats-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  background: var(--bg-surface, #111114);
+  border-radius: var(--radius-md, 10px);
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.2s;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  transition: all var(--transition-fast, 150ms);
 }
 
 .stats-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--bg-hover, #1f1f24);
+  border-color: var(--border-hover, rgba(255, 255, 255, 0.12));
 }
 
 .stats-icon {
@@ -137,12 +137,12 @@
 .stats-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary, #fafafa);
 }
 
 .stats-label {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, #a1a1aa);
   margin-top: 2px;
 }
 
@@ -155,9 +155,9 @@
 
 .period-card {
   flex: 1;
-  background: rgba(30, 215, 96, 0.1);
+  background: var(--accent-subtle, rgba(30, 215, 96, 0.15));
   border: 1px solid rgba(30, 215, 96, 0.2);
-  border-radius: 12px;
+  border-radius: var(--radius-md, 10px);
   padding: 16px;
   text-align: center;
 }
@@ -165,29 +165,30 @@
 .period-card h4 {
   margin: 0 0 8px 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, #a1a1aa);
+  font-family: var(--font-display, 'Outfit', sans-serif);
   font-weight: 500;
 }
 
 .period-value {
   font-size: 2rem;
   font-weight: 700;
-  color: #1ed760;
+  color: var(--accent-primary, #1ed760);
 }
 
 .period-label {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted, #52525b);
   margin-left: 4px;
 }
 
 /* Chart Section */
 .chart-section {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
+  background: var(--bg-surface, #111114);
+  border-radius: var(--radius-md, 10px);
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .chart-header {
@@ -200,37 +201,39 @@
 .chart-header h3 {
   margin: 0;
   font-size: 1.1rem;
-  color: #fff;
+  color: var(--text-primary, #fafafa);
+  font-family: var(--font-display, 'Outfit', sans-serif);
   font-weight: 600;
 }
 
 .period-selector {
   display: flex;
   gap: 4px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bg-deep, #0a0a0c);
   padding: 4px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 6px);
 }
 
 .period-selector button {
   padding: 6px 12px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
-  border-radius: 6px;
+  color: var(--text-secondary, #a1a1aa);
+  border-radius: var(--radius-sm, 6px);
   cursor: pointer;
   font-size: 0.85rem;
-  transition: all 0.2s;
+  font-family: var(--font-display, 'Outfit', sans-serif);
+  transition: all var(--transition-fast, 150ms);
 }
 
 .period-selector button.active {
-  background: #1ed760;
+  background: var(--accent-primary, #1ed760);
   color: #000;
   font-weight: 600;
 }
 
 .period-selector button:hover:not(.active) {
-  color: #fff;
+  color: var(--text-primary, #fafafa);
 }
 
 .chart-container {
@@ -242,7 +245,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted, #52525b);
 }
 
 /* Lists Section */
@@ -254,16 +257,17 @@
 }
 
 .top-list {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
+  background: var(--bg-surface, #111114);
+  border-radius: var(--radius-md, 10px);
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .top-list h3 {
   margin: 0 0 16px 0;
   font-size: 1.1rem;
-  color: #fff;
+  color: var(--text-primary, #fafafa);
+  font-family: var(--font-display, 'Outfit', sans-serif);
   font-weight: 600;
 }
 
@@ -277,7 +281,7 @@
   display: flex;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .top-list li:last-child {
@@ -287,50 +291,51 @@
 .top-list .rank {
   width: 28px;
   height: 28px;
-  background: rgba(30, 215, 96, 0.2);
+  background: var(--accent-subtle, rgba(30, 215, 96, 0.15));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1ed760;
+  color: var(--accent-primary, #1ed760);
   margin-right: 12px;
 }
 
 .top-list .name {
   flex: 1;
-  color: #fff;
+  color: var(--text-primary, #fafafa);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .top-list .count {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted, #52525b);
   font-size: 0.9rem;
   margin-left: 12px;
 }
 
 .list-empty {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted, #52525b);
   text-align: center;
   padding: 20px;
 }
 
 /* Search Section */
 .search-section {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
+  background: var(--bg-surface, #111114);
+  border-radius: var(--radius-md, 10px);
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .search-section h3 {
   margin: 0 0 16px 0;
   font-size: 1.1rem;
-  color: #fff;
+  color: var(--text-primary, #fafafa);
+  font-family: var(--font-display, 'Outfit', sans-serif);
   font-weight: 600;
 }
 
@@ -343,31 +348,34 @@
 .search-form input {
   flex: 1;
   padding: 10px 16px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #fff;
+  background: var(--bg-deep, #0a0a0c);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-primary, #fafafa);
   font-size: 0.95rem;
+  font-family: var(--font-display, 'Outfit', sans-serif);
 }
 
 .search-form input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted, #52525b);
 }
 
 .search-form input:focus {
   outline: none;
-  border-color: #1ed760;
+  border-color: var(--accent-primary, #1ed760);
+  box-shadow: 0 0 0 3px var(--accent-subtle, rgba(30, 215, 96, 0.15));
 }
 
 .search-form button {
   padding: 10px 20px;
-  background: #1ed760;
+  background: var(--accent-primary, #1ed760);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 6px);
   color: #000;
   font-weight: 600;
+  font-family: var(--font-display, 'Outfit', sans-serif);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast, 150ms);
 }
 
 .search-form button:hover {
@@ -386,46 +394,47 @@
   display: flex;
   align-items: center;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  background: var(--bg-deep, #0a0a0c);
+  border-radius: var(--radius-sm, 6px);
   margin-bottom: 8px;
 }
 
 .search-results .result-name {
   flex: 1;
-  color: #fff;
+  color: var(--text-primary, #fafafa);
   font-weight: 500;
 }
 
 .search-results .result-artist {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, #a1a1aa);
   margin: 0 16px;
 }
 
 .search-results .result-date {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted, #52525b);
   font-size: 0.85rem;
 }
 
 .no-results {
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted, #52525b);
   padding: 20px;
 }
 
 /* Recent Section */
 .recent-section {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
+  background: var(--bg-surface, #111114);
+  border-radius: var(--radius-md, 10px);
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .recent-section h3 {
   margin: 0 0 16px 0;
   font-size: 1.1rem;
-  color: #fff;
+  color: var(--text-primary, #fafafa);
+  font-family: var(--font-display, 'Outfit', sans-serif);
   font-weight: 600;
 }
 
@@ -438,22 +447,22 @@
 .recent-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .recent-table th {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, #a1a1aa);
   font-weight: 500;
   font-size: 0.85rem;
   text-transform: uppercase;
 }
 
 .recent-table td {
-  color: #fff;
+  color: var(--text-primary, #fafafa);
 }
 
 .recent-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-hover, #1f1f24);
 }
 
 .status-badge {
@@ -465,42 +474,44 @@
 }
 
 .status-completed {
-  background: rgba(30, 215, 96, 0.2);
-  color: #1ed760;
+  background: var(--accent-subtle, rgba(30, 215, 96, 0.15));
+  color: var(--accent-primary, #1ed760);
 }
 
 .status-error {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
 }
 
 .status-skipped {
-  background: rgba(251, 191, 36, 0.2);
+  background: rgba(251, 191, 36, 0.15);
   color: #fbbf24;
 }
 
 /* Footer */
 .statistics-footer {
   padding: 20px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  background: var(--bg-surface, #111114);
   display: flex;
   justify-content: flex-end;
 }
 
 .reset-btn {
   padding: 10px 20px;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm, 6px);
   color: #ef4444;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  font-family: var(--font-display, 'Outfit', sans-serif);
+  transition: all var(--transition-fast, 150ms);
 }
 
 .reset-btn:hover {
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Responsive */
