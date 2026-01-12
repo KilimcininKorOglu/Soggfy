@@ -80,16 +80,20 @@ notifications.initWebhooks();
 queue.setNotificationManager(notifications);
 
 // Initialize file manager - get base path from Soggfy config or use default
-let fileManager = null;
-let metadataEditor = null;
+const defaultMusicPath = process.env.SOGGFY_SAVE_PATH || 
+  path.join(process.env.USERPROFILE || process.env.HOME || '', 'Music', 'Soggfy');
 
-// Update file manager when config is received
+let fileManager = new FileManager(defaultMusicPath);
+let metadataEditor = new MetadataEditor(defaultMusicPath);
+console.log(`File manager initialized with default path: ${defaultMusicPath}`);
+
+// Update file manager when config is received from Soggfy
 queue.on('configSync', (config) => {
-  if (config && config.savePath) {
+  if (config && config.savePath && config.savePath !== fileManager.basePath) {
     const basePath = config.savePath;
     fileManager = new FileManager(basePath);
     metadataEditor = new MetadataEditor(basePath);
-    console.log(`File manager initialized with path: ${basePath}`);
+    console.log(`File manager updated with Soggfy path: ${basePath}`);
   }
 });
 
