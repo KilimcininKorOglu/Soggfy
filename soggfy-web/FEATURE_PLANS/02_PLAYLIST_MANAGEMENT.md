@@ -531,22 +531,22 @@ module.exports = PlaylistManager;
 
 #### API Endpoints
 
-| Method | Endpoint                      | Description                            |
-|--------|-------------------------------|----------------------------------------|
-| GET    | `/api/playlists`              | Get all saved playlists                |
-| GET    | `/api/playlists/:id`          | Get single playlist details            |
-| POST   | `/api/playlists`              | Save a playlist to favorites           |
-| DELETE | `/api/playlists/:id`          | Remove saved playlist                  |
-| POST   | `/api/playlists/:id/sync`     | Sync playlist for new tracks           |
-| POST   | `/api/playlists/sync-all`     | Sync all saved playlists               |
-| GET    | `/api/playlists/:id/tracks`   | Get playlist track IDs                 |
-| GET    | `/api/playlists/:id/new`      | Get new track IDs since last download  |
-| POST   | `/api/playlists/:id/download` | Download playlist (all or new only)    |
-| GET    | `/api/history`                | Get download history (paginated)       |
-| GET    | `/api/history/search`         | Search download history                |
-| POST   | `/api/history/:id/redownload` | Re-download item from history          |
-| DELETE | `/api/history/:id`            | Delete single history item             |
-| DELETE | `/api/history`                | Clear all history                      |
+| Method | Endpoint                      | Description                           |
+|--------|-------------------------------|---------------------------------------|
+| GET    | `/api/playlists`              | Get all saved playlists               |
+| GET    | `/api/playlists/:id`          | Get single playlist details           |
+| POST   | `/api/playlists`              | Save a playlist to favorites          |
+| DELETE | `/api/playlists/:id`          | Remove saved playlist                 |
+| POST   | `/api/playlists/:id/sync`     | Sync playlist for new tracks          |
+| POST   | `/api/playlists/sync-all`     | Sync all saved playlists              |
+| GET    | `/api/playlists/:id/tracks`   | Get playlist track IDs                |
+| GET    | `/api/playlists/:id/new`      | Get new track IDs since last download |
+| POST   | `/api/playlists/:id/download` | Download playlist (all or new only)   |
+| GET    | `/api/history`                | Get download history (paginated)      |
+| GET    | `/api/history/search`         | Search download history               |
+| POST   | `/api/history/:id/redownload` | Re-download item from history         |
+| DELETE | `/api/history/:id`            | Delete single history item            |
+| DELETE | `/api/history`                | Clear all history                     |
 
 #### server.js Integration
 
@@ -1038,14 +1038,14 @@ export default History;
 
 **Why SQLite over JSON files?**
 
-| Feature                | JSON Files                        | SQLite                              |
-|------------------------|-----------------------------------|-------------------------------------|
-| Playlist track storage | Array of all IDs in memory        | Separate table, on-demand access    |
-| Finding new tracks     | O(n) array comparison             | O(1) with indexed timestamp query   |
-| History search         | O(n) linear scan                  | O(log n) indexed search             |
-| Pagination             | Load all, slice in memory         | Native LIMIT/OFFSET                 |
-| Data integrity         | Two files can get out of sync     | Single file with transactions       |
-| Concurrent access      | Risk of corruption                | ACID compliant                      |
+| Feature                | JSON Files                    | SQLite                            |
+|------------------------|-------------------------------|-----------------------------------|
+| Playlist track storage | Array of all IDs in memory    | Separate table, on-demand access  |
+| Finding new tracks     | O(n) array comparison         | O(1) with indexed timestamp query |
+| History search         | O(n) linear scan              | O(log n) indexed search           |
+| Pagination             | Load all, slice in memory     | Native LIMIT/OFFSET               |
+| Data integrity         | Two files can get out of sync | Single file with transactions     |
+| Concurrent access      | Risk of corruption            | ACID compliant                    |
 
 **Database Size Estimate:**
 - 1 playlist with 100 tracks ~5 KB

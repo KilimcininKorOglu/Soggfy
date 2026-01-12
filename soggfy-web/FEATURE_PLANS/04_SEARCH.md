@@ -1087,14 +1087,14 @@ export default ArtistDetail;
 
 **Why SQLite over Memory/localStorage?**
 
-| Feature             | Memory/localStorage      | SQLite                           |
-|---------------------|--------------------------|----------------------------------|
-| Persistence         | Lost on restart          | Permanent                        |
-| Search in history   | Linear scan              | Indexed LIKE query               |
-| Popular searches    | Manual counting          | ORDER BY search_count            |
-| Duplicate handling  | Manual check             | ON CONFLICT DO UPDATE            |
-| Storage limit       | ~5MB localStorage        | Unlimited                        |
-| Cross-session       | No                       | Yes                              |
+| Feature            | Memory/localStorage | SQLite                |
+|--------------------|---------------------|-----------------------|
+| Persistence        | Lost on restart     | Permanent             |
+| Search in history  | Linear scan         | Indexed LIKE query    |
+| Popular searches   | Manual counting     | ORDER BY search_count |
+| Duplicate handling | Manual check        | ON CONFLICT DO UPDATE |
+| Storage limit      | ~5MB localStorage   | Unlimited             |
+| Cross-session      | No                  | Yes                   |
 
 **Database Size Estimate:**
 - 1 search history entry ~100 bytes

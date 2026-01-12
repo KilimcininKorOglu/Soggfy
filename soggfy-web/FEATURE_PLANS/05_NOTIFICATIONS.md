@@ -1066,18 +1066,18 @@ module.exports = TelegramBot;
 
 #### API Endpoints
 
-| Method | Endpoint                              | Description                   |
-|--------|---------------------------------------|-------------------------------|
-| GET    | `/api/notifications/settings`         | Get notification settings     |
-| PUT    | `/api/notifications/settings`         | Update notification settings  |
-| POST   | `/api/notifications/push/subscribe`   | Register push subscription    |
-| POST   | `/api/notifications/push/unsubscribe` | Unregister push subscription  |
-| GET    | `/api/notifications/push/subscriptions`| List push subscriptions      |
-| GET    | `/api/notifications/vapid-key`        | Get VAPID public key          |
-| POST   | `/api/notifications/test`             | Send test notification        |
-| GET    | `/api/notifications/history`          | Get notification history      |
-| GET    | `/api/notifications/stats`            | Get notification statistics   |
-| DELETE | `/api/notifications/history`          | Clear notification history    |
+| Method | Endpoint                                | Description                  |
+|--------|-----------------------------------------|------------------------------|
+| GET    | `/api/notifications/settings`           | Get notification settings    |
+| PUT    | `/api/notifications/settings`           | Update notification settings |
+| POST   | `/api/notifications/push/subscribe`     | Register push subscription   |
+| POST   | `/api/notifications/push/unsubscribe`   | Unregister push subscription |
+| GET    | `/api/notifications/push/subscriptions` | List push subscriptions      |
+| GET    | `/api/notifications/vapid-key`          | Get VAPID public key         |
+| POST   | `/api/notifications/test`               | Send test notification       |
+| GET    | `/api/notifications/history`            | Get notification history     |
+| GET    | `/api/notifications/stats`              | Get notification statistics  |
+| DELETE | `/api/notifications/history`            | Clear notification history   |
 
 #### server.js Integration
 
@@ -1708,14 +1708,14 @@ self.addEventListener('notificationclick', event => {
 
 **Why SQLite over JSON/Memory?**
 
-| Feature                 | JSON/Memory                       | SQLite                               |
-|-------------------------|-----------------------------------|--------------------------------------|
-| Push subscriptions      | Lost on restart                   | Persistent                           |
-| Notification history    | Not implemented                   | Full history with filtering          |
-| Settings storage        | Separate JSON file                | Same database                        |
-| Batch queue             | Memory only                       | Persistent across restarts           |
-| Statistics              | Manual calculation                | SQL aggregation                      |
-| Filtering               | Not possible                      | Indexed queries                      |
+| Feature              | JSON/Memory        | SQLite                      |
+|----------------------|--------------------|-----------------------------|
+| Push subscriptions   | Lost on restart    | Persistent                  |
+| Notification history | Not implemented    | Full history with filtering |
+| Settings storage     | Separate JSON file | Same database               |
+| Batch queue          | Memory only        | Persistent across restarts  |
+| Statistics           | Manual calculation | SQL aggregation             |
+| Filtering            | Not possible       | Indexed queries             |
 
 **Database Size Estimate:**
 - 1 push subscription ~200 bytes

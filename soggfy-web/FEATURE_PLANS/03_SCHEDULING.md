@@ -645,18 +645,18 @@ module.exports = Scheduler;
 
 #### API Endpoints
 
-| Method | Endpoint                       | Description                     |
-|--------|--------------------------------|---------------------------------|
-| GET    | `/api/schedules`               | Get all schedules               |
-| GET    | `/api/schedules/:id`           | Get schedule with stats         |
-| POST   | `/api/schedules`               | Create new schedule             |
-| PUT    | `/api/schedules/:id`           | Update schedule                 |
-| DELETE | `/api/schedules/:id`           | Delete schedule                 |
-| POST   | `/api/schedules/:id/toggle`    | Enable/disable schedule         |
-| POST   | `/api/schedules/:id/run`       | Run schedule immediately        |
-| GET    | `/api/schedules/:id/executions`| Get schedule's execution history|
-| GET    | `/api/schedules/history`       | Get all execution history       |
-| POST   | `/api/schedules/validate-cron` | Validate cron expression        |
+| Method | Endpoint                        | Description                      |
+|--------|---------------------------------|----------------------------------|
+| GET    | `/api/schedules`                | Get all schedules                |
+| GET    | `/api/schedules/:id`            | Get schedule with stats          |
+| POST   | `/api/schedules`                | Create new schedule              |
+| PUT    | `/api/schedules/:id`            | Update schedule                  |
+| DELETE | `/api/schedules/:id`            | Delete schedule                  |
+| POST   | `/api/schedules/:id/toggle`     | Enable/disable schedule          |
+| POST   | `/api/schedules/:id/run`        | Run schedule immediately         |
+| GET    | `/api/schedules/:id/executions` | Get schedule's execution history |
+| GET    | `/api/schedules/history`        | Get all execution history        |
+| POST   | `/api/schedules/validate-cron`  | Validate cron expression         |
 
 #### server.js Integration
 
@@ -1242,14 +1242,14 @@ export default CreateSchedule;
 
 **Why SQLite over JSON?**
 
-| Feature                | JSON File                         | SQLite                              |
-|------------------------|-----------------------------------|-------------------------------------|
-| Execution history      | Limited to 100, all in memory     | Unlimited with pagination           |
-| History search         | Not implemented                   | Indexed queries available           |
-| Schedule stats         | Manual calculation                | SQL aggregation (COUNT, SUM)        |
-| Next run calculation   | Placeholder code                  | Proper cron-parser integration      |
-| Data cleanup           | Manual slice                      | DELETE with WHERE clause            |
-| Concurrent access      | Risk of corruption                | ACID transactions                   |
+| Feature              | JSON File                     | SQLite                         |
+|----------------------|-------------------------------|--------------------------------|
+| Execution history    | Limited to 100, all in memory | Unlimited with pagination      |
+| History search       | Not implemented               | Indexed queries available      |
+| Schedule stats       | Manual calculation            | SQL aggregation (COUNT, SUM)   |
+| Next run calculation | Placeholder code              | Proper cron-parser integration |
+| Data cleanup         | Manual slice                  | DELETE with WHERE clause       |
+| Concurrent access    | Risk of corruption            | ACID transactions              |
 
 **Database Size Estimate:**
 - 1 schedule ~500 bytes
@@ -1317,16 +1317,16 @@ export default CreateSchedule;
 
 ## Common Cron Expressions
 
-| Schedule                            | Cron Expression | Description             |
-|-------------------------------------|-----------------|-------------------------|
-| Every day at 3 AM                   | `0 3 * * *`     | Daily sync              |
-| Every day at midnight               | `0 0 * * *`     | Midnight sync           |
-| Every Sunday at 2 AM                | `0 2 * * 0`     | Weekly backup           |
-| Every Monday at 6 AM                | `0 6 * * 1`     | Start of week           |
-| Every 6 hours                       | `0 */6 * * *`   | Frequent updates        |
-| Every 12 hours                      | `0 */12 * * *`  | Twice daily             |
-| First of month at 4 AM              | `0 4 1 * *`     | Monthly archive         |
-| Weekdays at 8 AM                    | `0 8 * * 1-5`   | Workday morning         |
+| Schedule               | Cron Expression | Description      |
+|------------------------|-----------------|------------------|
+| Every day at 3 AM      | `0 3 * * *`     | Daily sync       |
+| Every day at midnight  | `0 0 * * *`     | Midnight sync    |
+| Every Sunday at 2 AM   | `0 2 * * 0`     | Weekly backup    |
+| Every Monday at 6 AM   | `0 6 * * 1`     | Start of week    |
+| Every 6 hours          | `0 */6 * * *`   | Frequent updates |
+| Every 12 hours         | `0 */12 * * *`  | Twice daily      |
+| First of month at 4 AM | `0 4 1 * *`     | Monthly archive  |
+| Weekdays at 8 AM       | `0 8 * * 1-5`   | Workday morning  |
 
 ## Testing
 

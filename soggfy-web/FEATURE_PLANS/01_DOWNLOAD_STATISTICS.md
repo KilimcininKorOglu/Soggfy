@@ -441,20 +441,20 @@ module.exports = StatsManager;
 
 #### API Endpoints
 
-| Method | Endpoint                    | Description                           |
-|--------|-----------------------------|---------------------------------------|
-| GET    | `/api/stats`                | Get all statistics                    |
-| GET    | `/api/stats/totals`         | Get totals only (fast)                |
-| GET    | `/api/stats/chart/daily`    | Get daily chart (last 30 days)        |
-| GET    | `/api/stats/chart/weekly`   | Get weekly chart (last 12 weeks)      |
-| GET    | `/api/stats/chart/monthly`  | Get monthly chart (last 12 months)    |
-| GET    | `/api/stats/top/artists`    | Get top artists                       |
-| GET    | `/api/stats/top/albums`     | Get top albums                        |
-| GET    | `/api/stats/recent`         | Get recent downloads                  |
-| GET    | `/api/stats/search`         | Search downloads                      |
-| GET    | `/api/stats/export/json`    | Export as JSON                        |
-| GET    | `/api/stats/export/csv`     | Export as CSV                         |
-| DELETE | `/api/stats/reset`          | Reset all statistics                  |
+| Method | Endpoint                   | Description                        |
+|--------|----------------------------|------------------------------------|
+| GET    | `/api/stats`               | Get all statistics                 |
+| GET    | `/api/stats/totals`        | Get totals only (fast)             |
+| GET    | `/api/stats/chart/daily`   | Get daily chart (last 30 days)     |
+| GET    | `/api/stats/chart/weekly`  | Get weekly chart (last 12 weeks)   |
+| GET    | `/api/stats/chart/monthly` | Get monthly chart (last 12 months) |
+| GET    | `/api/stats/top/artists`   | Get top artists                    |
+| GET    | `/api/stats/top/albums`    | Get top albums                     |
+| GET    | `/api/stats/recent`        | Get recent downloads               |
+| GET    | `/api/stats/search`        | Search downloads                   |
+| GET    | `/api/stats/export/json`   | Export as JSON                     |
+| GET    | `/api/stats/export/csv`    | Export as CSV                      |
+| DELETE | `/api/stats/reset`         | Reset all statistics               |
 
 #### server.js Integration
 
@@ -777,14 +777,14 @@ export default Statistics;
 
 **Why SQLite over JSON?**
 
-| Feature              | JSON File                     | SQLite                          |
-|----------------------|-------------------------------|----------------------------------|
-| Query speed          | O(n) - scan entire array      | O(log n) - indexed queries       |
-| Memory usage         | Loads all data into RAM       | On-demand disk access            |
-| Concurrent access    | Risk of corruption            | ACID transactions                |
-| Aggregation          | Manual JS loops               | Native SQL (SUM, COUNT, GROUP BY)|
-| Data size limit      | ~100MB practical limit        | Terabytes                        |
-| Search               | Linear scan                   | Indexed full-text search         |
+| Feature           | JSON File                | SQLite                            |
+|-------------------|--------------------------|-----------------------------------|
+| Query speed       | O(n) - scan entire array | O(log n) - indexed queries        |
+| Memory usage      | Loads all data into RAM  | On-demand disk access             |
+| Concurrent access | Risk of corruption       | ACID transactions                 |
+| Aggregation       | Manual JS loops          | Native SQL (SUM, COUNT, GROUP BY) |
+| Data size limit   | ~100MB practical limit   | Terabytes                         |
+| Search            | Linear scan              | Indexed full-text search          |
 
 **Database Size Estimate:**
 - 1 download record ~200 bytes
