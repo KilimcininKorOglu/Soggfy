@@ -9,6 +9,7 @@ const { SoggfyClient } = require('./soggfyClient');
 const SpotifyAPI = require('./spotifyAuth');
 const QueueManager = require('./queueManager');
 const StatsManager = require('./statsManager');
+const PlaylistManager = require('./playlistManager');
 
 const app = express();
 app.use(cors());
@@ -48,6 +49,12 @@ const stats = new StatsManager(statsDbPath);
 
 // Wire up stats tracking to queue manager
 queue.setStatsManager(stats);
+
+// Initialize playlist manager (shares database with stats)
+const playlistMgr = new PlaylistManager(stats.db, spotify);
+
+// Wire up playlist manager to queue manager for history tracking
+queue.setPlaylistManager(playlistMgr);
 
 // Create HTTP server for both Express and WebSocket
 const server = http.createServer(app);
@@ -356,6 +363,186 @@ app.get('/api/stats/export/csv', authMiddleware, (req, res) => {
 // Reset all statistics
 app.delete('/api/stats/reset', authMiddleware, (req, res) => {
   stats.reset();
+  res.json({ success: true });
+});
+
+// ==================== PLAYLIST API ====================
+
+// Get all saved playlists
+app.get('/api/playlists', authMiddleware, (req, res) => {
+  res.json(playlistMgr.getPlaylists());
+});
+
+// Get single playlist details
+app.get('/api/playlists/:id', authMiddleware, (req, res) => {
+  const playlist = playlistMgr.getPlaylistInfo(req.params.id);
+  if (!playlist) {
+    return res.status(404).json({ error: 'Playlist not found' });
+  }
+  res.json(playlist);
+});
+
+// Save a playlist to favorites
+app.post('/api/playlists', authMiddleware, async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    const parsed = spotify.parseSpotifyUrl(url);
+    if (!parsed || parsed.type !== 'playlist') {
+      return res.status(400).json({ error: 'Invalid playlist URL' });
+    }
+
+    const playlist = await playlistMgr.savePlaylist(parsed.id);
+    res.json(playlist);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Remove saved playlist
+app.delete('/api/playlists/:id', authMiddleware, (req, res) => {
+  playlistMgr.removePlaylist(req.params.id);
+  res.json({ success: true });
+});
+
+// Sync a playlist for new tracks
+app.post('/api/playlists/:id/sync', authMiddleware, async (req, res) => {
+  try {
+    const result = await playlistMgr.syncPlaylist(req.params.id);
+    if (!result) {
+      return res.status(404).json({ error: 'Playlist not found' });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Sync all saved playlists
+app.post('/api/playlists/sync-all', authMiddleware, async (req, res) => {
+  try {
+    const results = await playlistMgr.syncAllPlaylists();
+    res.json(results);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get playlist track IDs
+app.get('/api/playlists/:id/tracks', authMiddleware, (req, res) => {
+  const trackIds = playlistMgr.getPlaylistTrackIds(req.params.id);
+  res.json({ trackIds });
+});
+
+// Get new track IDs since last download
+app.get('/api/playlists/:id/new', authMiddleware, (req, res) => {
+  const trackIds = playlistMgr.getNewTrackIds(req.params.id);
+  res.json({ trackIds, count: trackIds.length });
+});
+
+// Download playlist (all or new only)
+app.post('/api/playlists/:id/download', authMiddleware, async (req, res) => {
+  try {
+    const { newOnly } = req.body;
+    const playlistId = req.params.id;
+
+    const playlist = playlistMgr.getPlaylistInfo(playlistId);
+    if (!playlist) {
+      return res.status(404).json({ error: 'Playlist not found' });
+    }
+
+    let trackIds;
+    if (newOnly) {
+      trackIds = playlistMgr.getNewTrackIds(playlistId);
+    } else {
+      trackIds = playlistMgr.getPlaylistTrackIds(playlistId);
+    }
+
+    if (trackIds.length === 0) {
+      return res.json({ success: true, message: 'No tracks to download', count: 0 });
+    }
+
+    // Add tracks to queue
+    for (const trackId of trackIds) {
+      await queue.addUrl(`spotify:track:${trackId}`);
+    }
+
+    // Mark as downloaded
+    playlistMgr.markPlaylistDownloaded(playlistId);
+
+    // Add to history
+    playlistMgr.addToHistory({
+      id: playlistId,
+      type: 'playlist',
+      name: playlist.name,
+      image: playlist.image,
+      trackCount: trackIds.length,
+      url: `https://open.spotify.com/playlist/${playlistId}`
+    });
+
+    res.json({ success: true, count: trackIds.length });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ==================== HISTORY API ====================
+
+// Get download history (paginated)
+app.get('/api/history', authMiddleware, (req, res) => {
+  const { type, limit, offset } = req.query;
+  res.json(playlistMgr.getHistory({
+    type,
+    limit: parseInt(limit) || 50,
+    offset: parseInt(offset) || 0
+  }));
+});
+
+// Search download history
+app.get('/api/history/search', authMiddleware, (req, res) => {
+  const { q, limit } = req.query;
+  if (!q) {
+    return res.status(400).json({ error: 'Query parameter "q" is required' });
+  }
+  res.json(playlistMgr.searchHistory(q, parseInt(limit) || 50));
+});
+
+// Re-download item from history
+app.post('/api/history/:id/redownload', authMiddleware, async (req, res) => {
+  try {
+    const historyItem = playlistMgr.getHistoryItem(parseInt(req.params.id));
+    if (!historyItem) {
+      return res.status(404).json({ error: 'History item not found' });
+    }
+
+    if (!historyItem.url) {
+      return res.status(400).json({ error: 'No URL available for re-download' });
+    }
+
+    await queue.addUrl(historyItem.url);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete single history item
+app.delete('/api/history/:id', authMiddleware, (req, res) => {
+  playlistMgr.deleteHistoryItem(parseInt(req.params.id));
+  res.json({ success: true });
+});
+
+// Clear all history
+app.delete('/api/history', authMiddleware, (req, res) => {
+  const { before } = req.query;
+  if (before) {
+    playlistMgr.clearHistoryBefore(parseInt(before));
+  } else {
+    playlistMgr.clearHistory();
+  }
   res.json({ success: true });
 });
 

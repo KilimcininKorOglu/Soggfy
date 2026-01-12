@@ -19,6 +19,7 @@ class QueueManager {
     this.soggfyConfig = null;
     this.eventListeners = new Map();
     this.statsManager = null;
+    this.playlistManager = null;
 
     // Listen for config sync from Soggfy
     soggfyClient.on(MessageType.SYNC_CONFIG, (data) => {
@@ -65,6 +66,10 @@ class QueueManager {
     this.statsManager = statsManager;
   }
 
+  setPlaylistManager(playlistManager) {
+    this.playlistManager = playlistManager;
+  }
+
   trackStats(track, status) {
     if (!this.statsManager) return;
 
@@ -100,11 +105,35 @@ class QueueManager {
       case 'album':
         tracks = await this.spotifyAPI.getAlbumTracks(parsed.id);
         console.log(`Adding album with ${tracks.length} tracks`);
+        // Track album in history
+        if (this.playlistManager && tracks.length > 0) {
+          this.playlistManager.addToHistory({
+            id: parsed.id,
+            type: 'album',
+            name: tracks[0].album,
+            artist: tracks[0].artist,
+            image: tracks[0].albumArt,
+            trackCount: tracks.length,
+            url: spotifyUrl
+          });
+        }
         break;
 
       case 'playlist':
         tracks = await this.spotifyAPI.getPlaylistTracks(parsed.id);
         console.log(`Adding playlist with ${tracks.length} tracks`);
+        // Track playlist in history
+        if (this.playlistManager && tracks.length > 0) {
+          const playlist = await this.spotifyAPI.getPlaylist(parsed.id);
+          this.playlistManager.addToHistory({
+            id: parsed.id,
+            type: 'playlist',
+            name: playlist.name,
+            image: playlist.images[0]?.url,
+            trackCount: tracks.length,
+            url: spotifyUrl
+          });
+        }
         break;
     }
 

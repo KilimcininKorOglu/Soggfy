@@ -170,6 +170,32 @@ class SpotifyAPI {
     }));
   }
 
+  async getPlaylist(playlistId) {
+    if (!this.accessToken) await this.getAccessToken();
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/playlists/${playlistId}`,
+      {
+        headers: { 'Authorization': `Bearer ${this.accessToken}` }
+      }
+    );
+
+    // Fetch all tracks if playlist has more than 100
+    const playlist = response.data;
+    if (playlist.tracks.total > playlist.tracks.items.length) {
+      let nextUrl = playlist.tracks.next;
+      while (nextUrl) {
+        const nextResponse = await axios.get(nextUrl, {
+          headers: { 'Authorization': `Bearer ${this.accessToken}` }
+        });
+        playlist.tracks.items.push(...nextResponse.data.items);
+        nextUrl = nextResponse.data.next;
+      }
+    }
+
+    return playlist;
+  }
+
   async getPlaylistTracks(playlistId) {
     if (!this.accessToken) await this.getAccessToken();
 
