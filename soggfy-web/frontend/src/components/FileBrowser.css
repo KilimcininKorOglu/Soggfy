@@ -4,7 +4,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(10, 10, 12, 0.9);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,14 +14,15 @@
 }
 
 .file-browser-modal {
-  background: var(--bg-elevated, #1a1a1a);
-  border-radius: 12px;
+  background: var(--bg-elevated, #18181c);
+  border-radius: var(--radius-lg, 16px);
   width: 100%;
   max-width: 1000px;
   height: 90vh;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border-subtle, #333);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
 }
 
 .file-browser-header {
@@ -28,22 +30,36 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border-subtle, #333);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  background: var(--bg-surface, #111114);
 }
 
 .file-browser-header h2 {
   margin: 0;
   font-size: 1.3rem;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary, #fafafa);
+  font-family: var(--font-display, 'Outfit', sans-serif);
 }
 
 .file-browser-header .close-btn {
-  background: transparent;
+  background: var(--bg-hover, #1f1f24);
   border: none;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary, #a1a1aa);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 4px 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast, 150ms);
+}
+
+.file-browser-header .close-btn:hover {
+  background: var(--accent-subtle, rgba(30, 215, 96, 0.15));
+  color: var(--accent-primary, #1ed760);
 }
 
 .file-browser-toolbar {
@@ -51,8 +67,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  background: var(--bg-surface, #222);
-  border-bottom: 1px solid var(--border-subtle, #333);
+  background: var(--bg-surface, #111114);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
   gap: 16px;
   flex-wrap: wrap;
 }
