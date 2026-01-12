@@ -2,7 +2,7 @@ import Utils from "./utils";
 import { Player, PlayerState, TrackInfo, SpotifyUtils, Platform } from "./spotify-apis";
 import Resources from "./resources";
 import config, { isTrackIgnored } from "./config";
-import { PathTemplate, TemplatedSearchTree } from "./path-template";
+import { PathTemplate } from "./path-template";
 import { Connection, MessageType } from "./connection";
 
 export default class PlayerStateTracker {
@@ -271,39 +271,48 @@ export default class PlayerStateTracker {
 
     private async skipIgnoredTracks(queue: any, statusCache: Map<string, boolean>) {
         if (config.skipDownloadedTracks) {
-            let tree = new TemplatedSearchTree(config.savePaths.track);
             let queuedTracks = new Set<string>();
+            let trackIdsToCheck: string[] = [];
 
             for (let track of queue.nextUp) {
+                queuedTracks.add(track.uri);
+                
                 if (!statusCache.has(track.uri)) {
                     statusCache.set(track.uri, false);
-
-                    let vars = {
-                        track_name: track.name,
-                        artist_name: track.artists[0].name,
-                        all_artist_names: track.artists.map(v => v.name).join(", "),
-                        album_name: track.album.name
-                    };
-                    tree.add(track.uri, vars);
+                    const trackId = track.uri.split(':').pop();
+                    if (trackId) {
+                        trackIdsToCheck.push(trackId);
+                    }
                 }
-                queuedTracks.add(track.uri);
             }
-            //remove junk from cache
+            
+            // Remove junk from cache
             for (let track of statusCache.keys()) {
                 if (!queuedTracks.has(track)) {
                     statusCache.delete(track);
                 }
             }
-            if (!tree.isEmpty) {
+            
+            // Check which tracks are already downloaded by their ID
+            if (trackIdsToCheck.length > 0) {
                 let statusResp = await this.conn.request(MessageType.DOWNLOAD_STATUS, {
-                    searchTree: tree.root,
+                    checkTrackIds: trackIdsToCheck,
                     basePath: config.savePaths.basePath
                 });
-                for (let track in statusResp.results) {
-                    statusCache.set(track, true);
+                
+                // Mark downloaded tracks in cache
+                for (let downloadedId of (statusResp.downloadedIds || [])) {
+                    // Find the full URI for this track ID
+                    for (let track of queue.nextUp) {
+                        if (track.uri.endsWith(downloadedId)) {
+                            statusCache.set(track.uri, true);
+                            break;
+                        }
+                    }
                 }
             }
         }
+        
         let tracksToRemove = queue.nextUp.filter(v => isTrackIgnored(v) || statusCache.get(v.uri) === true);
         if (tracksToRemove.length > 0) {
             await Player.removeFromQueue(tracksToRemove);
