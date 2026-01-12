@@ -6,13 +6,15 @@ Mevcut `skipDownloadedTracks` sistemi karmaşık regex pattern'leri ile dosya si
 
 ## Çözüm
 
-Dosya adına Spotify Track ID ekle, skip kontrolünde sadece ID'yi ara.
+Dosya adının sonuna otomatik olarak Track ID ekle. Kullanıcı template'inden bağımsız, sistem tarafından eklenir.
 
 ### Örnek
 
 ```
-Mevcut:  11. Bohemian Rhapsody.mp3
-Yeni:    11. Bohemian Rhapsody - 6h240MaWo49TJ8Q8Lq8WMC.mp3
+Kullanıcı Template:  {track_num}. {track_name}
+Sonuç:               11. Bohemian Rhapsody - 6h240MaWo49TJ8Q8Lq8WMC.mp3
+                                            └──────────────────────────┘
+                                              Sistem tarafından eklenir
 ```
 
 ## Skip Kontrolü
@@ -38,31 +40,33 @@ bool IsAlreadyDownloaded(const fs::path& basePath, const std::string& trackId) {
 
 ## Uygulama
 
-### 1. Path Template Değişkeni Ekle
+### 1. Dosya Adına ID Ekleme (Otomatik)
 
-`Sprinkles/src/path-template.ts`:
+`Sprinkles/src/player-state-tracker.ts` - `getSavePaths()` fonksiyonunda:
 
 ```typescript
-{
-    name: "track_id",
-    desc: "Spotify Track/Episode ID (22 karakter)",
-    pattern: `[a-zA-Z0-9]{22}`,
-    getValue: (m, s) => s.item?.uri?.split(':').pop() || ""
+private getSavePaths(type: string, meta: any, playback: PlayerState) {
+    let template = config.savePaths[type] as string;
+    // ... mevcut kod ...
+    
+    let trackPath = path + PathTemplate.render(template, vars);
+    
+    // Track ID'yi dosya adının sonuna otomatik ekle
+    const trackId = playback.item?.uri?.split(':').pop() || "";
+    if (trackId) {
+        // Uzantıdan önce " - {trackId}" ekle
+        const ext = trackPath.match(/\.[^.]+$/)?.[0] || "";
+        trackPath = trackPath.replace(/\.[^.]+$/, "") + " - " + trackId + ext;
+    }
+    
+    return {
+        track: trackPath,
+        // ...
+    };
 }
 ```
 
-### 2. Varsayılan Template Güncelle
-
-`Sprinkles/src/config.ts`:
-
-```typescript
-savePaths: {
-    track: "{artist_name}/{album_name}{multi_disc_path}/{track_num}. {track_name} - {track_id}.ogg",
-    episode: "Podcasts/{artist_name}/{album_name}/{release_date} - {track_name} - {track_id}.ogg",
-}
-```
-
-### 3. Skip Kontrolü Ekle
+### 2. Skip Kontrolü Ekle
 
 `SpotifyOggDumper/StateManager.cpp` - `DOWNLOAD_STATUS` handler'a ekle:
 
@@ -79,7 +83,7 @@ if (content.contains("checkTrackId")) {
 }
 ```
 
-### 4. Sprinkles'da Kullan
+### 3. Skip Kontrolünü Çağır
 
 `Sprinkles/src/player-state-tracker.ts`:
 
@@ -97,11 +101,16 @@ if (response.exists) {
 
 ## Özet
 
-| Değişiklik | Dosya | Süre |
-|------------|-------|------|
-| `{track_id}` değişkeni | path-template.ts | 15 dk |
-| Varsayılan template | config.ts | 5 dk |
-| `IsAlreadyDownloaded()` | StateManager.cpp | 30 dk |
-| Skip kontrolü | player-state-tracker.ts | 30 dk |
+| Değişiklik              | Dosya                   | Süre  |
+|-------------------------|-------------------------|-------|
+| Otomatik ID ekleme      | player-state-tracker.ts | 30 dk |
+| `IsAlreadyDownloaded()` | StateManager.cpp        | 30 dk |
+| Skip kontrolü           | player-state-tracker.ts | 30 dk |
 
 **Toplam:** ~1.5 saat
+
+## Not
+
+- Kullanıcı template'i değişmez, `{track_id}` değişkeni eklemeye gerek yok
+- ID her zaman dosya adının sonuna, uzantıdan önce eklenir
+- Format: `{kullanıcı_şablonu} - {track_id}.{ext}`
