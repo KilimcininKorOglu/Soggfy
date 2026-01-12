@@ -13,6 +13,8 @@ const PlaylistManager = require('./playlistManager');
 const Scheduler = require('./scheduler');
 const SearchHistory = require('./searchHistory');
 const NotificationManager = require('./notificationManager');
+const FileManager = require('./fileManager');
+const MetadataEditor = require('./metadataEditor');
 
 const app = express();
 app.use(cors());
@@ -76,6 +78,20 @@ notifications.initWebhooks();
 
 // Wire up notifications to queue manager
 queue.setNotificationManager(notifications);
+
+// Initialize file manager - get base path from Soggfy config or use default
+let fileManager = null;
+let metadataEditor = null;
+
+// Update file manager when config is received
+queue.on('configSync', (config) => {
+  if (config && config.savePath) {
+    const basePath = config.savePath;
+    fileManager = new FileManager(basePath);
+    metadataEditor = new MetadataEditor(basePath);
+    console.log(`File manager initialized with path: ${basePath}`);
+  }
+});
 
 // Graceful shutdown handlers
 process.on('SIGTERM', () => {
@@ -884,6 +900,201 @@ app.get('/api/notifications/stats', authMiddleware, (req, res) => {
 app.delete('/api/notifications/history', authMiddleware, (req, res) => {
   notifications.cleanHistory(0);
   res.json({ success: true });
+});
+
+// ==================== FILE MANAGEMENT ROUTES ====================
+
+// Check if file manager is ready middleware
+const fileManagerReady = (req, res, next) => {
+  if (!fileManager) {
+    return res.status(503).json({ error: 'File manager not initialized. Waiting for Soggfy config.' });
+  }
+  next();
+};
+
+// Get file manager base path
+app.get('/api/files/basepath', authMiddleware, (req, res) => {
+  if (!fileManager) {
+    return res.status(503).json({ error: 'File manager not initialized' });
+  }
+  res.json({ basePath: fileManager.basePath });
+});
+
+// List directory contents
+app.get('/api/files', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: dirPath = '' } = req.query;
+    const result = await fileManager.listDirectory(dirPath);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get file details
+app.get('/api/files/details', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: filePath } = req.query;
+    if (!filePath) {
+      return res.status(400).json({ error: 'Path required' });
+    }
+    const result = await fileManager.getFileDetails(filePath);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Search files
+app.get('/api/files/search', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { q, searchMetadata, limit } = req.query;
+    if (!q) {
+      return res.status(400).json({ error: 'Query required' });
+    }
+    const result = await fileManager.search(q, {
+      searchMetadata: searchMetadata === 'true',
+      limit: parseInt(limit) || 100
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete file or directory
+app.delete('/api/files', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: targetPath } = req.query;
+    if (!targetPath) {
+      return res.status(400).json({ error: 'Path required' });
+    }
+    const result = await fileManager.deleteFile(targetPath);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Move/rename file
+app.post('/api/files/move', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { from, to } = req.body;
+    if (!from || !to) {
+      return res.status(400).json({ error: 'From and to paths required' });
+    }
+    const result = await fileManager.moveFile(from, to);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Create directory
+app.post('/api/files/mkdir', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: dirPath } = req.body;
+    if (!dirPath) {
+      return res.status(400).json({ error: 'Path required' });
+    }
+    const result = await fileManager.createDirectory(dirPath);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get storage statistics
+app.get('/api/files/stats', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const result = await fileManager.getStorageStats();
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Find duplicate files
+app.get('/api/files/duplicates', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const result = await fileManager.findDuplicates();
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get file metadata
+app.get('/api/files/metadata', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: filePath } = req.query;
+    if (!filePath) {
+      return res.status(400).json({ error: 'Path required' });
+    }
+    const result = await metadataEditor.readMetadata(filePath);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update file metadata
+app.put('/api/files/metadata', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: filePath, updates } = req.body;
+    if (!filePath) {
+      return res.status(400).json({ error: 'Path required' });
+    }
+    const result = await metadataEditor.writeMetadata(filePath, updates || {});
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Batch update metadata
+app.put('/api/files/metadata/batch', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { files, updates } = req.body;
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return res.status(400).json({ error: 'Files array required' });
+    }
+    const result = await metadataEditor.batchUpdate(files, updates || {});
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get file artwork
+app.get('/api/files/artwork', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: filePath } = req.query;
+    if (!filePath) {
+      return res.status(400).json({ error: 'Path required' });
+    }
+    const result = await metadataEditor.getArtwork(filePath);
+    if (!result) {
+      return res.status(404).json({ error: 'No artwork found' });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Remove file artwork
+app.delete('/api/files/artwork', authMiddleware, fileManagerReady, async (req, res) => {
+  try {
+    const { path: filePath } = req.query;
+    if (!filePath) {
+      return res.status(400).json({ error: 'Path required' });
+    }
+    const result = await metadataEditor.removeArtwork(filePath);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 const PORT = process.env.PORT || 3001;
