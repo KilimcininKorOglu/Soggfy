@@ -8,6 +8,7 @@ import History from './components/History';
 import Schedules from './components/Schedules';
 import Search from './components/Search';
 import Notifications from './components/Notifications';
+import FileBrowser from './components/FileBrowser';
 
 const API_BASE = 'http://localhost:3001/api';
 const WS_URL = 'ws://localhost:3001/ws';
@@ -28,6 +29,7 @@ function App() {
   const [showSchedules, setShowSchedules] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showFileBrowser, setShowFileBrowser] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
   const [autoSelectDevice, setAutoSelectDevice] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
@@ -376,6 +378,9 @@ function App() {
           <button onClick={() => setShowNotifications(true)} className="nav-button">
             Notifications
           </button>
+          <button onClick={() => setShowFileBrowser(true)} className="nav-button">
+            Files
+          </button>
           <button onClick={() => setShowStatistics(true)} className="stats-button">
             Statistics
           </button>
@@ -439,6 +444,13 @@ function App() {
       {showNotifications && (
         <Notifications
           onClose={() => setShowNotifications(false)}
+          sessionId={sessionId}
+        />
+      )}
+
+      {showFileBrowser && (
+        <FileBrowser
+          onClose={() => setShowFileBrowser(false)}
           sessionId={sessionId}
         />
       )}
