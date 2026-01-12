@@ -171,12 +171,12 @@ body::after {
   color: var(--text-primary);
 }
 
-.nav-item.primary {
+.nav-item.active {
   background: var(--accent-subtle);
   color: var(--accent-primary);
 }
 
-.nav-item.primary:hover {
+.nav-item.active:hover {
   background: rgba(30, 215, 96, 0.25);
 }
 

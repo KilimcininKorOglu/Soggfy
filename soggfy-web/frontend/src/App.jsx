@@ -373,38 +373,38 @@ function App() {
         </div>
         
         <nav className="sidebar-nav">
-          <button onClick={() => setShowSearch(true)} className="nav-item primary">
+          <button onClick={() => setShowSearch(true)} className={`nav-item ${showSearch ? 'active' : ''}`}>
             <span className="nav-icon">🔍</span>
             <span className="nav-label">Search</span>
           </button>
-          <button onClick={() => setShowPlaylists(true)} className="nav-item">
+          <button onClick={() => setShowPlaylists(true)} className={`nav-item ${showPlaylists ? 'active' : ''}`}>
             <span className="nav-icon">📋</span>
             <span className="nav-label">Playlists</span>
           </button>
-          <button onClick={() => setShowHistory(true)} className="nav-item">
+          <button onClick={() => setShowHistory(true)} className={`nav-item ${showHistory ? 'active' : ''}`}>
             <span className="nav-icon">📜</span>
             <span className="nav-label">History</span>
           </button>
-          <button onClick={() => setShowSchedules(true)} className="nav-item">
+          <button onClick={() => setShowSchedules(true)} className={`nav-item ${showSchedules ? 'active' : ''}`}>
             <span className="nav-icon">⏰</span>
             <span className="nav-label">Schedules</span>
           </button>
-          <button onClick={() => setShowFileBrowser(true)} className="nav-item">
+          <button onClick={() => setShowFileBrowser(true)} className={`nav-item ${showFileBrowser ? 'active' : ''}`}>
             <span className="nav-icon">📁</span>
             <span className="nav-label">Files</span>
           </button>
           
           <div className="nav-divider"></div>
           
-          <button onClick={() => setShowStatistics(true)} className="nav-item">
+          <button onClick={() => setShowStatistics(true)} className={`nav-item ${showStatistics ? 'active' : ''}`}>
             <span className="nav-icon">📊</span>
             <span className="nav-label">Statistics</span>
           </button>
-          <button onClick={() => setShowNotifications(true)} className="nav-item">
+          <button onClick={() => setShowNotifications(true)} className={`nav-item ${showNotifications ? 'active' : ''}`}>
             <span className="nav-icon">🔔</span>
             <span className="nav-label">Notifications</span>
           </button>
-          <button onClick={() => setShowSettings(true)} className="nav-item">
+          <button onClick={() => setShowSettings(true)} className={`nav-item ${showSettings ? 'active' : ''}`}>
             <span className="nav-icon">⚙️</span>
             <span className="nav-label">Settings</span>
           </button>
