@@ -31,7 +31,6 @@ function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showFileBrowser, setShowFileBrowser] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
-  const [autoSelectDevice, setAutoSelectDevice] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [sessionId, setSessionId] = useState(() => localStorage.getItem('sessionId') || '');
@@ -78,7 +77,7 @@ function App() {
           case 'authStatus':
             setAuthenticated(message.data.authenticated);
             if (message.data.authenticated) {
-              fetchDevices();
+              fetchDevices(false); // Don't auto-select on auth, let user choose
             }
             break;
           case 'configSync':
@@ -125,12 +124,13 @@ function App() {
       setLoggedIn(response.data.authenticated);
       setSoggfyConnected(response.data.soggfyConnected);
       setAuthenticated(response.data.spotifyAuthenticated);
-      setAutoSelectDevice(response.data.autoSelectDevice !== false);
+      
+      const shouldAutoSelect = response.data.autoSelectDevice !== false;
       
       // Only proceed if authenticated (or auth not required)
       if (response.data.authenticated) {
         if (response.data.spotifyAuthenticated) {
-          fetchDevices(response.data.autoSelectDevice !== false);
+          fetchDevices(shouldAutoSelect);
         }
         if (response.data.soggfyConnected) {
           fetchConfig();
@@ -178,12 +178,15 @@ function App() {
     }
   };
 
-  const fetchDevices = async (autoSelect = autoSelectDevice) => {
+  const fetchDevices = async (autoSelect = false) => {
     try {
       const response = await axios.get(`${API_BASE}/devices`);
-      setDevices(response.data.devices || []);
-      if (autoSelect && response.data.devices?.length === 1) {
-        const deviceId = response.data.devices[0].id;
+      const deviceList = response.data.devices || [];
+      setDevices(deviceList);
+      
+      // Only auto-select if explicitly requested AND only one device exists
+      if (autoSelect && deviceList.length === 1) {
+        const deviceId = deviceList[0].id;
         setSelectedDevice(deviceId);
         await selectDevice(deviceId);
       }
