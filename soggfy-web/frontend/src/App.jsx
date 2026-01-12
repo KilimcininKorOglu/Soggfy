@@ -5,6 +5,7 @@ import Settings from './components/Settings';
 import Statistics from './components/Statistics';
 import Playlists from './components/Playlists';
 import History from './components/History';
+import Schedules from './components/Schedules';
 
 const API_BASE = 'http://localhost:3001/api';
 const WS_URL = 'ws://localhost:3001/ws';
@@ -22,6 +23,7 @@ function App() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSchedules, setShowSchedules] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
   const [autoSelectDevice, setAutoSelectDevice] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
@@ -361,6 +363,9 @@ function App() {
           <button onClick={() => setShowHistory(true)} className="nav-button">
             History
           </button>
+          <button onClick={() => setShowSchedules(true)} className="nav-button">
+            Schedules
+          </button>
           <button onClick={() => setShowStatistics(true)} className="stats-button">
             Statistics
           </button>
@@ -403,6 +408,13 @@ function App() {
       {showHistory && (
         <History
           onClose={() => setShowHistory(false)}
+          sessionId={sessionId}
+        />
+      )}
+
+      {showSchedules && (
+        <Schedules
+          onClose={() => setShowSchedules(false)}
           sessionId={sessionId}
         />
       )}
