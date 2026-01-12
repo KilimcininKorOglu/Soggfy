@@ -10,6 +10,7 @@ const SpotifyAPI = require('./spotifyAuth');
 const QueueManager = require('./queueManager');
 const StatsManager = require('./statsManager');
 const PlaylistManager = require('./playlistManager');
+const Scheduler = require('./scheduler');
 
 const app = express();
 app.use(cors());
@@ -55,6 +56,22 @@ const playlistMgr = new PlaylistManager(stats.db, spotify);
 
 // Wire up playlist manager to queue manager for history tracking
 queue.setPlaylistManager(playlistMgr);
+
+// Initialize scheduler (shares database with stats and playlist)
+const scheduler = new Scheduler(stats.db, queue, playlistMgr);
+
+// Graceful shutdown handlers
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down...');
+  scheduler.shutdown();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, shutting down...');
+  scheduler.shutdown();
+  process.exit(0);
+});
 
 // Create HTTP server for both Express and WebSocket
 const server = http.createServer(app);
@@ -544,6 +561,101 @@ app.delete('/api/history', authMiddleware, (req, res) => {
     playlistMgr.clearHistory();
   }
   res.json({ success: true });
+});
+
+// ==================== SCHEDULE API ====================
+
+// Get all schedules
+app.get('/api/schedules', authMiddleware, (req, res) => {
+  res.json(scheduler.getSchedules());
+});
+
+// Get single schedule with stats
+app.get('/api/schedules/:id', authMiddleware, (req, res) => {
+  const schedule = scheduler.getSchedule(req.params.id);
+  if (!schedule) {
+    return res.status(404).json({ error: 'Schedule not found' });
+  }
+  res.json(schedule);
+});
+
+// Create new schedule
+app.post('/api/schedules', authMiddleware, (req, res) => {
+  try {
+    const schedule = scheduler.createSchedule(req.body);
+    res.json(schedule);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update schedule
+app.put('/api/schedules/:id', authMiddleware, (req, res) => {
+  try {
+    const schedule = scheduler.updateSchedule(req.params.id, req.body);
+    if (!schedule) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+    res.json(schedule);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete schedule
+app.delete('/api/schedules/:id', authMiddleware, (req, res) => {
+  scheduler.deleteSchedule(req.params.id);
+  res.json({ success: true });
+});
+
+// Toggle schedule enabled/disabled
+app.post('/api/schedules/:id/toggle', authMiddleware, (req, res) => {
+  const schedule = scheduler.toggleSchedule(req.params.id);
+  if (!schedule) {
+    return res.status(404).json({ error: 'Schedule not found' });
+  }
+  res.json(schedule);
+});
+
+// Run schedule immediately
+app.post('/api/schedules/:id/run', authMiddleware, async (req, res) => {
+  try {
+    const result = await scheduler.runNow(req.params.id);
+    if (!result) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get schedule's execution history
+app.get('/api/schedules/:id/executions', authMiddleware, (req, res) => {
+  const { limit } = req.query;
+  res.json(scheduler.getScheduleExecutions(req.params.id, parseInt(limit) || 20));
+});
+
+// Get all execution history
+app.get('/api/schedules/history', authMiddleware, (req, res) => {
+  const { limit, offset } = req.query;
+  res.json(scheduler.getExecutionHistory({
+    limit: parseInt(limit) || 50,
+    offset: parseInt(offset) || 0
+  }));
+});
+
+// Validate cron expression
+app.post('/api/schedules/validate-cron', authMiddleware, (req, res) => {
+  const { expression, timezone } = req.body;
+  const isValid = scheduler.isValidCron(expression);
+
+  if (isValid) {
+    const nextRun = scheduler.getNextRunTime(expression, timezone);
+    res.json({ valid: true, nextRun });
+  } else {
+    res.json({ valid: false, error: 'Invalid cron expression' });
+  }
 });
 
 const PORT = process.env.PORT || 3001;
