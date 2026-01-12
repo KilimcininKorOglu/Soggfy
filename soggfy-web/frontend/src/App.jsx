@@ -148,8 +148,11 @@ function App() {
     try {
       const response = await axios.post(`${API_BASE}/login`, loginForm);
       if (response.data.sessionId) {
-        setSessionId(response.data.sessionId);
-        localStorage.setItem('sessionId', response.data.sessionId);
+        const newSessionId = response.data.sessionId;
+        setSessionId(newSessionId);
+        localStorage.setItem('sessionId', newSessionId);
+        // Update axios header immediately before checkHealth
+        axios.defaults.headers.common['X-Session-Id'] = newSessionId;
         setLoggedIn(true);
         checkHealth();
       }
