@@ -46,6 +46,9 @@ const queue = new QueueManager(soggfy, spotify);
 const statsDbPath = path.join(process.env.LOCALAPPDATA || '.', 'Soggfy', 'stats.db');
 const stats = new StatsManager(statsDbPath);
 
+// Wire up stats tracking to queue manager
+queue.setStatsManager(stats);
+
 // Create HTTP server for both Express and WebSocket
 const server = http.createServer(app);
 
