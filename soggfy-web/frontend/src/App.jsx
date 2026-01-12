@@ -359,44 +359,65 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <header>
-        <h1>Soggfy Web UI</h1>
-        <div className="header-actions">
-          <button onClick={() => setShowSearch(true)} className="search-nav-button">
-            Search
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h1>Soggfy</h1>
+          <span className={`status-dot ${soggfyConnected ? 'connected' : 'disconnected'}`} title={soggfyConnected ? 'Connected' : 'Disconnected'}></span>
+        </div>
+        
+        <nav className="sidebar-nav">
+          <button onClick={() => setShowSearch(true)} className="nav-item primary">
+            <span className="nav-icon">🔍</span>
+            <span className="nav-label">Search</span>
           </button>
-          <button onClick={() => setShowPlaylists(true)} className="nav-button">
-            Playlists
+          <button onClick={() => setShowPlaylists(true)} className="nav-item">
+            <span className="nav-icon">📋</span>
+            <span className="nav-label">Playlists</span>
           </button>
-          <button onClick={() => setShowHistory(true)} className="nav-button">
-            History
+          <button onClick={() => setShowHistory(true)} className="nav-item">
+            <span className="nav-icon">📜</span>
+            <span className="nav-label">History</span>
           </button>
-          <button onClick={() => setShowSchedules(true)} className="nav-button">
-            Schedules
+          <button onClick={() => setShowSchedules(true)} className="nav-item">
+            <span className="nav-icon">⏰</span>
+            <span className="nav-label">Schedules</span>
           </button>
-          <button onClick={() => setShowNotifications(true)} className="nav-button">
-            Notifications
+          <button onClick={() => setShowFileBrowser(true)} className="nav-item">
+            <span className="nav-icon">📁</span>
+            <span className="nav-label">Files</span>
           </button>
-          <button onClick={() => setShowFileBrowser(true)} className="nav-button">
-            Files
+          
+          <div className="nav-divider"></div>
+          
+          <button onClick={() => setShowStatistics(true)} className="nav-item">
+            <span className="nav-icon">📊</span>
+            <span className="nav-label">Statistics</span>
           </button>
-          <button onClick={() => setShowStatistics(true)} className="stats-button">
-            Statistics
+          <button onClick={() => setShowNotifications(true)} className="nav-item">
+            <span className="nav-icon">🔔</span>
+            <span className="nav-label">Notifications</span>
           </button>
-          <button onClick={() => setShowSettings(true)} className="settings-button">
-            Settings
+          <button onClick={() => setShowSettings(true)} className="nav-item">
+            <span className="nav-icon">⚙️</span>
+            <span className="nav-label">Settings</span>
           </button>
+        </nav>
+        
+        <div className="sidebar-footer">
           {authRequired && (
-            <button onClick={handleLogout} className="logout-button">
-              Logout
+            <button onClick={handleLogout} className="logout-btn">
+              <span className="nav-icon">🚪</span>
+              <span className="nav-label">Logout</span>
             </button>
           )}
-          <span className={`indicator ${soggfyConnected ? 'connected' : 'disconnected'}`}>
-            Soggfy
-          </span>
+          <a href="https://x.com/KorOglan" target="_blank" rel="noopener noreferrer" className="credit-link">
+            @KorOglan
+          </a>
         </div>
-      </header>
+      </aside>
+
+      <main className="main-content">
 
       {showSettings && (
         <Settings
@@ -554,12 +575,7 @@ function App() {
           </div>
         )}
       </div>
-
-      <footer className="app-footer">
-        <a href="https://x.com/KorOglan" target="_blank" rel="noopener noreferrer">
-          Kilimcinin Kor Oglu
-        </a>
-      </footer>
+      </main>
     </div>
   );
 }
