@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import {
   Chart as ChartJS,
@@ -12,7 +12,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import './Statistics.css';
 
 ChartJS.register(
@@ -37,7 +37,7 @@ function Statistics({ onClose, sessionId }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
 
-  const headers = sessionId ? { 'x-session-id': sessionId } : {};
+  const headers = useMemo(() => sessionId ? { 'x-session-id': sessionId } : {}, [sessionId]);
 
   const fetchStats = useCallback(async () => {
     try {
