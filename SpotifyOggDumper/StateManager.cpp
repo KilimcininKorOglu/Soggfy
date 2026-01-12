@@ -163,6 +163,22 @@ struct StateManagerImpl : public StateManager
                         { "results", results }
                     });
                 }
+                else if (content.contains("checkTrackIds")) {
+                    auto basePath = Utils::NormalizeToLongPath(content["basePath"], true);
+                    std::vector<std::string> trackIds = content["checkTrackIds"];
+                    json downloadedIds = json::array();
+                    
+                    for (const auto& trackId : trackIds) {
+                        if (IsTrackIdDownloaded(basePath, trackId)) {
+                            downloadedIds.push_back(trackId);
+                        }
+                    }
+                    
+                    conn->Send(MessageType::DOWNLOAD_STATUS, {
+                        { "reqId", content["reqId"] },
+                        { "downloadedIds", downloadedIds }
+                    });
+                }
                 break;
             }
             case MessageType::PLAYER_STATE: {
@@ -427,6 +443,21 @@ struct StateManagerImpl : public StateManager
             SendTrackStatus(trackUri, "ERROR", ex.what());
         }
     }
+    bool IsTrackIdDownloaded(const fs::path& basePath, const std::string& trackId)
+    {
+        if (!fs::exists(basePath)) return false;
+        
+        for (auto& entry : fs::recursive_directory_iterator(basePath)) {
+            if (entry.is_regular_file()) {
+                std::string filename = entry.path().filename().string();
+                if (filename.find(trackId) != std::string::npos) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
     void SearchPathTree(json& results, const json& node, const fs::path& currPath, const fs::path& relativeTo = {}, bool currPathExists = false)
     {
         if (!currPath.empty() && !(currPathExists || fs::exists(currPath))) return;
