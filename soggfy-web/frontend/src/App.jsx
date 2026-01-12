@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 import Settings from './components/Settings';
+import Statistics from './components/Statistics';
 
 const API_BASE = 'http://localhost:3001/api';
 const WS_URL = 'ws://localhost:3001/ws';
@@ -16,6 +17,7 @@ function App() {
   const [soggfyConnected, setSoggfyConnected] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
   const [soggfyConfig, setSoggfyConfig] = useState(null);
   const [autoSelectDevice, setAutoSelectDevice] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
@@ -349,6 +351,9 @@ function App() {
       <header>
         <h1>Soggfy Web UI</h1>
         <div className="header-actions">
+          <button onClick={() => setShowStatistics(true)} className="stats-button">
+            Statistics
+          </button>
           <button onClick={() => setShowSettings(true)} className="settings-button">
             Settings
           </button>
@@ -368,6 +373,13 @@ function App() {
           config={soggfyConfig}
           onClose={() => setShowSettings(false)}
           onConfigUpdate={setSoggfyConfig}
+        />
+      )}
+
+      {showStatistics && (
+        <Statistics
+          onClose={() => setShowStatistics(false)}
+          sessionId={sessionId}
         />
       )}
 
