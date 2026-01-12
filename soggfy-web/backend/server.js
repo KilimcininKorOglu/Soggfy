@@ -12,6 +12,7 @@ const StatsManager = require('./statsManager');
 const PlaylistManager = require('./playlistManager');
 const Scheduler = require('./scheduler');
 const SearchHistory = require('./searchHistory');
+const NotificationManager = require('./notificationManager');
 
 const app = express();
 app.use(cors());
@@ -64,16 +65,30 @@ const scheduler = new Scheduler(stats.db, queue, playlistMgr);
 // Initialize search history (shares database with stats)
 const searchHistory = new SearchHistory(stats.db);
 
+// Initialize notification manager (shares database with stats)
+const notifications = new NotificationManager(statsDbPath, {
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
+  vapidEmail: process.env.VAPID_EMAIL
+});
+notifications.initVapid();
+notifications.initWebhooks();
+
+// Wire up notifications to queue manager
+queue.setNotificationManager(notifications);
+
 // Graceful shutdown handlers
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM, shutting down...');
   scheduler.shutdown();
+  notifications.shutdown();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('Received SIGINT, shutting down...');
   scheduler.shutdown();
+  notifications.shutdown();
   process.exit(0);
 });
 
@@ -800,6 +815,74 @@ app.post('/api/search/favorites', authMiddleware, async (req, res) => {
 // Remove favorite artist
 app.delete('/api/search/favorites/:id', authMiddleware, (req, res) => {
   searchHistory.removeFavorite(req.params.id);
+  res.json({ success: true });
+});
+
+// ==================== NOTIFICATION ROUTES ====================
+
+// Get notification settings
+app.get('/api/notifications/settings', authMiddleware, (req, res) => {
+  res.json(notifications.getAllSettings());
+});
+
+// Update notification settings
+app.put('/api/notifications/settings', authMiddleware, (req, res) => {
+  notifications.updateSettings(req.body);
+  res.json({ success: true });
+});
+
+// Register push subscription
+app.post('/api/notifications/push/subscribe', authMiddleware, (req, res) => {
+  notifications.registerPushSubscription(req.body, req.headers['user-agent']);
+  res.json({ success: true });
+});
+
+// Unregister push subscription
+app.post('/api/notifications/push/unsubscribe', authMiddleware, (req, res) => {
+  notifications.unregisterPushSubscription(req.body.endpoint);
+  res.json({ success: true });
+});
+
+// Get push subscriptions
+app.get('/api/notifications/push/subscriptions', authMiddleware, (req, res) => {
+  const subscriptions = notifications.getPushSubscriptions();
+  res.json(subscriptions.map(s => ({
+    endpoint: s.endpoint.substring(0, 50) + '...',
+    active: true
+  })));
+});
+
+// Get VAPID public key
+app.get('/api/notifications/vapid-key', (req, res) => {
+  res.json({ key: process.env.VAPID_PUBLIC_KEY || null });
+});
+
+// Send test notification
+app.post('/api/notifications/test', authMiddleware, async (req, res) => {
+  const { channel } = req.body;
+  const results = await notifications.sendTestNotification(channel);
+  res.json(results);
+});
+
+// Get notification history
+app.get('/api/notifications/history', authMiddleware, (req, res) => {
+  const { type, channel, limit, offset } = req.query;
+  res.json(notifications.getHistory({
+    type,
+    channel,
+    limit: parseInt(limit) || 50,
+    offset: parseInt(offset) || 0
+  }));
+});
+
+// Get notification stats
+app.get('/api/notifications/stats', authMiddleware, (req, res) => {
+  res.json(notifications.getHistoryStats());
+});
+
+// Clear notification history
+app.delete('/api/notifications/history', authMiddleware, (req, res) => {
+  notifications.cleanHistory(0);
   res.json({ success: true });
 });
 

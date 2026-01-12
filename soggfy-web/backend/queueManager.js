@@ -70,6 +70,10 @@ class QueueManager {
     this.playlistManager = playlistManager;
   }
 
+  setNotificationManager(notificationManager) {
+    this.notificationManager = notificationManager;
+  }
+
   trackStats(track, status) {
     if (!this.statsManager) return;
 
@@ -266,9 +270,29 @@ class QueueManager {
       this.currentTrack.completedAt = Date.now();
       this.currentTrack.path = statusInfo.path;
       this.trackStats(this.currentTrack, 'completed');
+      
+      // Send notification
+      if (this.notificationManager) {
+        this.notificationManager.notifyDownloadComplete(this.currentTrack).catch(err => {
+          console.error('Failed to send notification:', err.message);
+        });
+      }
+      
       this.completedTracks.unshift(this.currentTrack);
       this.currentTrack = null;
       this.emit('queueUpdate', this.getStatus());
+
+      // Check if queue is now empty
+      if (this.queue.length === 0 && this.notificationManager) {
+        const stats = {
+          completed: this.completedTracks.filter(t => t.status === 'completed').length,
+          failed: this.completedTracks.filter(t => t.status === 'error').length,
+          skipped: this.completedTracks.filter(t => t.status === 'skipped').length
+        };
+        this.notificationManager.notifyQueueComplete(stats).catch(err => {
+          console.error('Failed to send queue complete notification:', err.message);
+        });
+      }
 
       setTimeout(() => this.processQueue(), 1000);
     } else if (status === DownloadStatus.ERROR) {
@@ -276,6 +300,14 @@ class QueueManager {
       this.currentTrack.status = 'error';
       this.currentTrack.error = statusInfo.message || 'Download failed';
       this.trackStats(this.currentTrack, 'error');
+      
+      // Send error notification
+      if (this.notificationManager) {
+        this.notificationManager.notifyDownloadError(this.currentTrack, this.currentTrack.error).catch(err => {
+          console.error('Failed to send error notification:', err.message);
+        });
+      }
+      
       this.completedTracks.unshift(this.currentTrack);
       this.currentTrack = null;
       this.emit('queueUpdate', this.getStatus());
