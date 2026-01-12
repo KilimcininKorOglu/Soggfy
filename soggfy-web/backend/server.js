@@ -89,8 +89,8 @@ console.log(`File manager initialized with default path: ${defaultMusicPath}`);
 
 // Update file manager when config is received from Soggfy
 queue.on('configSync', (config) => {
-  if (config && config.savePath && config.savePath !== fileManager.basePath) {
-    const basePath = config.savePath;
+  const basePath = config?.savePaths?.basePath;
+  if (basePath && basePath !== fileManager.basePath) {
     fileManager = new FileManager(basePath);
     metadataEditor = new MetadataEditor(basePath);
     console.log(`File manager updated with Soggfy path: ${basePath}`);

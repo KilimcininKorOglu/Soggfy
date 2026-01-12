@@ -34,6 +34,9 @@ class SoggfyClient {
       this.isConnected = true;
       this.reconnectAttempts = 0;
 
+      // Request current config from Soggfy
+      this.send(MessageType.SYNC_CONFIG, {});
+
       const callback = this.callbacks.get('connected');
       if (callback) callback();
     });
