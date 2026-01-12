@@ -244,6 +244,25 @@ header h1::before {
   border-color: rgba(30, 215, 96, 0.5);
 }
 
+.nav-button {
+  padding: 10px 18px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.nav-button:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
 /* Status Indicator */
 .indicator {
   padding: 6px 12px;
