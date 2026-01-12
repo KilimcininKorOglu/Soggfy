@@ -12,6 +12,8 @@ A music downloader mod for the Windows Spotify client
 - Download and embed metadata, lyrics and canvas
 - Generate M3U for albums and playlists
 - Automatic conversion to MP3 and many other formats
+- Skip already downloaded tracks (Track ID based detection)
+- Configurable podcast download support
 
 # Installation and Usage
 1. Download and extract the `.zip` package of the [latest release](https://github.com/Rafiuth/Soggfy/releases/latest).
@@ -28,7 +30,8 @@ If the Spotify client crashes because of missing DLLs, you may need to install t
 # Notes
 - Songs are only downloaded if played from start to finish, without seeking (pausing is fine).
 - Quality depends on the account being used: _160Kb/s_ or _320Kb/s_ for _free_ and _premium_ plans respectively. You may also need to change the streaming quality to "Very high" on Spotify settings to get _320Kb/s_ files.
-- Podcast support is very hit or miss and will only work with audio-only OGG podcasts (usually the exclusive ones).
+- Podcast support is very hit or miss and will only work with audio-only OGG podcasts (usually the exclusive ones). Can be disabled in settings.
+- Downloaded files include Spotify Track ID in filename for reliable skip detection (e.g., `Song Name - 6h240MaWo49TJ8Q8Lq8WMC.mp3`).
 - **This mod breaks [Spotify's Guidelines](https://www.spotify.com/us/legal/user-guidelines/) and using it could get your account banned. Consider using alt accounts or keeping backups (see [Exportify](https://github.com/watsonbox/exportify) and [SpotMyBackup](http://www.spotmybackup.com)).**
 
 # How it works
